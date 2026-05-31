@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SEFB Planner / Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/img/sefb.png">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="profile">
+  <div class="site-shell">
+    <aside class="side">
+      <div class="brand"><img class="brand-mark" src="assets/img/sefb.png" alt="SEFB"><div class="brand-title">SEFB Degree Planner</div><div class="brand-sub">Settings</div></div>
+      <nav class="nav" data-nav></nav>
+    </aside>
+    <main class="main">
+      <div class="container">
+        <div class="topbar">
+          <div><div class="eyebrow">Profile</div><h2>Plan Settings</h2></div>
+          <div class="program-controls"><select class="select" data-program-select></select><span id="trackControl"></span><span id="pathControl"></span><span id="langControl"></span></div>
+        </div>
+        <section class="grid cols-2">
+          <div class="panel">
+            <div class="eyebrow">Active program</div>
+            <h3 id="profileProgram">--</h3>
+            <p class="muted" id="profileMeta">--</p>
+          </div>
+          <div class="panel">
+            <div class="eyebrow">Storage</div>
+            <h3 id="profileStored">--</h3>
+            <p class="muted">Plans are stored locally in this browser so the static site remains private and backend-free.</p>
+          </div>
+        </section>
+        <div class="section-head"><h2>Actions</h2></div>
+        <section class="panel">
+          <div class="inline-actions">
+            <button class="button solid" id="exportJson">Export JSON</button>
+            <button class="button danger" id="resetPlan">Reset current plan</button>
+          </div>
+        </section>
+        <div class="section-head"><h2>Import Backup</h2></div>
+        <section class="panel">
+          <p class="muted">Import a JSON file previously exported from this planner. The imported file replaces the plan saved in this browser.</p>
+          <input class="file-input" id="importJson" type="file" accept="application/json,.json">
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="assets/js/sefb-data.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

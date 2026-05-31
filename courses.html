@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SEFB Planner / Courses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/img/sefb.png">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body data-page="courses">
+  <div class="site-shell">
+    <aside class="side">
+      <div class="brand"><img class="brand-mark" src="assets/img/sefb.png" alt="SEFB"><div class="brand-title">SEFB Degree Planner</div><div class="brand-sub">Course catalogue</div></div>
+      <nav class="nav" data-nav></nav>
+    </aside>
+    <main class="main">
+      <div class="container">
+        <div class="topbar">
+          <div><div class="eyebrow">Catalogue</div><h2>Courses and Prerequisites</h2></div>
+          <div class="program-controls"><select class="select" data-program-select></select><span id="trackControl"></span><span id="pathControl"></span><span id="langControl"></span></div>
+        </div>
+        <section class="panel">
+          <input class="input" id="courseSearch" type="search" placeholder="Search by code, title, category, or prerequisite" style="width:100%">
+        </section>
+        <div class="section-head"><h2>Course List</h2></div>
+        <table class="table">
+          <thead><tr><th>Code</th><th>Course</th><th>Cat</th><th>Cr</th><th>Prerequisites</th></tr></thead>
+          <tbody id="courseRows"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+  <script src="assets/js/sefb-data.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
