@@ -181,6 +181,34 @@
     }).map((course) => ({ ...course, status: prereqStatus(course.code, sem), placed: placement[course.code] || null }));
   }
 
+  function addableCourseRows(sem) {
+    const placement = placementMap();
+    const committedTrack = committedTrackId();
+    const committedField = committedFieldId();
+    return currentProgram().courses.filter((course) => {
+      return !(course.cat === "D" && course.lang && course.lang !== state.langId);
+    }).map((course) => {
+      const placed = placement[course.code] || null;
+      const failedPlaced = placed && placed.grade && FAIL_GRADES.has(placed.grade);
+      let disabled = false;
+      let lockReason = "";
+      if (course.cat === "D" && course.track && committedTrack && course.track !== committedTrack) {
+        disabled = true;
+        lockReason = "other field locked";
+      }
+      if (course.cat === "F" && course.field && committedField && course.field !== committedField) {
+        disabled = true;
+        lockReason = "other field locked";
+      }
+      if (placed && !failedPlaced) {
+        disabled = true;
+        lockReason = `taken in Sem ${placed.sem}`;
+      }
+      const status = prereqStatus(course.code, sem);
+      return { ...course, placed, failedPlaced, status, disabled, lockReason };
+    });
+  }
+
   function placementMap() {
     const out = {};
     plannedItems().forEach((item) => {
@@ -297,7 +325,7 @@
       }
       card.innerHTML = `<div class="eyebrow">Private browser save</div>
         <strong>${relativeTime(state.lastSaved)}</strong>
-        <p>Plans stay on this device. Export from Profile before changing browser.</p>`;
+        <p>Saved on this device. Export a backup from Profile.</p>`;
     });
   }
 
@@ -368,7 +396,8 @@
     const p = currentProgram();
     const g = computeGPA();
     const total = plannedCredits();
-    $("heroProgram").textContent = p.nameEn || p.short;
+    const heroProgram = $("heroProgram");
+    if (heroProgram) heroProgram.textContent = p.nameEn || p.short;
     $("heroMeta").textContent = `${p.total} credits / ${p.semCount} semesters / ${p.courses.length} course entries`;
     $("statCredits").textContent = `${total}/${p.total}`;
     $("statCgpa").textContent = g.cgpa ? g.cgpa.toFixed(2) : "--";
@@ -414,9 +443,16 @@
       notices.push(`${dComponent?.en || "Specialization"} committed: ${p.tracks.find((track) => track.id === committedTrack)?.en || committedTrack}`);
     }
     if (committedField && p.fFields) notices.push(`Field elective committed: ${p.fFields.find((field) => field.id === committedField)?.en || committedField}`);
-    const noticeHolder = $("plannerNotices");
-    if (noticeHolder) {
-      noticeHolder.innerHTML = notices.length ? notices.map((msg) => `<span class="pill">${msg} / other groups locked</span>`).join("") : `<span class="muted">No specialization or field-elective commitment yet.</span>`;
+    const legendHolder = $("plannerLegend");
+    if (legendHolder) {
+      const categoryLegend = p.components.map((component) => `
+        <span class="legend-chip cat-${component.l}">
+          <strong>Category ${component.l}</strong>
+          <span>${component.en}</span>
+        </span>
+      `).join("");
+      const commitment = notices.length ? `<div class="commitment-note">${notices.map((msg) => `${msg} / other groups locked`).join(" · ")}</div>` : "";
+      legendHolder.innerHTML = `<div class="legend-chips">${categoryLegend}</div>${commitment}`;
     }
     const holder = $("semesters");
     holder.innerHTML = "";
@@ -426,11 +462,11 @@
         const c = getCourse(item.code);
         if (!c) return "";
         const status = prereqStatus(c.code, sem);
-        return `<article class="course">
+        return `<article class="course cat-${c.cat}">
           <div class="course-title">${c.code} / ${c.en}</div>
           <div class="muted">${c.ms || ""}</div>
           <div class="course-meta">
-            <span class="pill">${c.cr} credits</span><span class="pill">Cat ${c.cat}</span>
+            <span class="pill">${c.cr} credits</span><span class="pill cat-pill cat-${c.cat}">Cat ${c.cat}</span>
             <span class="pill ${status.ok ? "ok" : "bad"}">${status.ok ? "Ready" : status.missing.join(", ")}</span>
           </div>
           <div class="inline-actions">
@@ -449,21 +485,31 @@
       holder.innerHTML += `<section class="semester">
         <div class="semester-head"><strong>Semester ${sem}</strong><span>${credits} credits</span></div>
         <div class="semester-body">
-          ${courses || `<div class="empty-state"><strong>No courses planned.</strong><span>Search below to add the first course for this semester.</span></div>`}
-          <div class="course-finder">
-            <input class="input" data-course-search="${sem}" type="search" placeholder="Search courses for Semester ${sem}">
-            <div class="finder-list" data-course-results="${sem}"></div>
+          ${courses || `<div class="empty-state"><strong>No courses planned.</strong><span>Use the grouped list below to add a subject.</span></div>`}
+          <div class="dropdown-add">
+            <select class="select add-select" data-add-select="${sem}">
+              <option value="">+ Add course...</option>
+              ${buildGroupedCourseOptions(sem)}
+            </select>
+            <button class="button solid" data-add-selected="${sem}">Add</button>
           </div>
         </div>
       </section>`;
     }
     bindPlannerActions();
-    renderCourseFinders();
   }
 
   function bindPlannerActions() {
-    document.querySelectorAll("[data-course-search]").forEach((input) => {
-      input.oninput = () => renderCourseFinder(Number(input.dataset.courseSearch), input.value);
+    document.querySelectorAll("[data-add-selected]").forEach((button) => {
+      button.onclick = () => {
+        const sem = button.dataset.addSelected;
+        const select = document.querySelector(`[data-add-select="${sem}"]`);
+        if (!select || !select.value) return;
+        state.plan[sem].push({ code: select.value, grade: "" });
+        saveState();
+        renderPlanner();
+        toast("Course added");
+      };
     });
     document.querySelectorAll("[data-remove]").forEach((button) => {
       button.onclick = () => {
@@ -496,6 +542,8 @@
     });
     const load = $("loadRecommended");
     if (load) load.onclick = loadRecommended;
+    const reset = $("resetPlanner");
+    if (reset) reset.onclick = resetCurrentPlan;
     const addSem = $("addSemester");
     if (addSem) addSem.onclick = () => {
       state.extraSems = (state.extraSems || 0) + 1;
@@ -505,47 +553,32 @@
     };
   }
 
-  function renderCourseFinders() {
-    for (let sem = 1; sem <= totalSems(); sem++) renderCourseFinder(sem, "");
+  function buildGroupedCourseOptions(sem) {
+    const p = currentProgram();
+    const byCat = {};
+    addableCourseRows(sem).forEach((course) => {
+      (byCat[course.cat] = byCat[course.cat] || []).push(course);
+    });
+    return p.components.map((component) => {
+      const list = (byCat[component.l] || []).sort((a, b) => a.code.localeCompare(b.code));
+      if (!list.length) return "";
+      const options = [];
+      options.push(`<option disabled>── ${component.l}. ${component.en.toUpperCase()} ──</option>`);
+      list.forEach((course) => {
+        const label = optionLabel(course);
+        const disabled = course.disabled ? "disabled" : "";
+        options.push(`<option value="${course.code}" ${disabled}>${label}</option>`);
+      });
+      return `<optgroup label="${component.l}. ${component.en}">${options.join("")}</optgroup>`;
+    }).join("");
   }
 
-  function renderCourseFinder(sem, query) {
-    const holder = document.querySelector(`[data-course-results="${sem}"]`);
-    if (!holder) return;
-    const q = (query || "").trim().toLowerCase();
-      const rows = availableCourses(sem)
-      .filter((course) => {
-        const haystack = `${course.code} ${course.en} ${course.ms || ""} ${course.cat} ${(course.pre || []).join(" ")}`.toLowerCase();
-        return !q || haystack.includes(q);
-      })
-      .sort((a, b) => Number(!a.status.ok) - Number(!b.status.ok) || a.code.localeCompare(b.code))
-      .slice(0, q ? 18 : 8);
-    if (!rows.length) {
-      holder.innerHTML = `<div class="finder-empty">No matching available courses.</div>`;
-      return;
-    }
-    holder.innerHTML = rows.map((course) => {
-      const isRetake = course.placed && course.placed.grade && FAIL_GRADES.has(course.placed.grade);
-      const reason = isRetake ? `Retake after ${course.placed.grade} in Semester ${course.placed.sem}` : course.status.ok ? "Ready to place" : course.status.missing.join(", ");
-      return `<article class="finder-row ${course.status.ok ? "" : "locked"}">
-        <div>
-          <strong>${isRetake ? "Retake " : ""}${course.code}</strong> / ${course.en}
-          <div class="muted">${course.cr} credits / Category ${course.cat} / ${reason}</div>
-        </div>
-        <button class="mini-button ${course.status.ok ? "" : "danger-text"}" data-add-course="${sem}:${course.code}">
-          ${course.status.ok ? "Add" : "Add anyway"}
-        </button>
-      </article>`;
-    }).join("");
-    holder.querySelectorAll("[data-add-course]").forEach((button) => {
-      button.onclick = () => {
-        const [targetSem, code] = button.dataset.addCourse.split(":");
-        state.plan[targetSem].push({ code, grade: "" });
-        saveState();
-        renderPlanner();
-        toast("Course added");
-      };
-    });
+  function optionLabel(course) {
+    if (course.failedPlaced) return `Retake Sem ${course.placed.sem} / ${course.code} / ${course.en} (${course.cr}cr)`;
+    if (course.placed) return `Sem ${course.placed.sem} / ${course.code} / ${course.en} (${course.cr}cr)`;
+    if (course.disabled) return `Locked / ${course.code} / ${course.en} (${course.cr}cr) / ${course.lockReason}`;
+    if (!course.status.ok) return `Locked / ${course.code} / ${course.en} (${course.cr}cr) / ${course.status.missing.join(", ")}`;
+    return `${course.code} / ${course.en} (${course.cr}cr)`;
   }
 
   function loadRecommended() {
@@ -555,14 +588,26 @@
       toast("No recommended plan for this selection");
       return;
     }
-    state.plan = emptyPlan();
-    Object.entries(rec).forEach(([sem, codes]) => {
-      state.plan[sem] = codes.map((code) => ({ code, grade: "" }));
+    confirmDialog("Replace your current plan with the official recommended plan?", () => {
+      state.plan = emptyPlan();
+      Object.entries(rec).forEach(([sem, codes]) => {
+        state.plan[sem] = codes.map((code) => ({ code, grade: "" }));
+      });
+      if (state.langId && state.langId !== "MAN") substituteLangCourses("MAN", state.langId);
+      saveState();
+      renderPlanner();
+      toast("Recommended plan loaded");
     });
-    if (state.langId && state.langId !== "MAN") substituteLangCourses("MAN", state.langId);
-    saveState();
-    renderPlanner();
-    toast("Recommended plan loaded");
+  }
+
+  function resetCurrentPlan() {
+    confirmDialog("Reset your current plan? This cannot be undone.", () => {
+      state.plan = emptyPlan();
+      state.extraSems = 0;
+      saveState();
+      renderPlanner();
+      toast("Plan reset");
+    });
   }
 
   function renderAudit() {
@@ -634,11 +679,13 @@
     $("profileMeta").textContent = `${p.total} credits / ${p.semCount} standard semesters`;
     $("profileStored").textContent = localStorage.getItem(STORAGE_KEY) ? "Saved in this browser" : "No saved v3 plan yet";
     $("resetPlan").onclick = () => {
-      state.plan = emptyPlan();
-      state.extraSems = 0;
-      saveState();
-      toast("Plan reset");
-      renderProfile();
+      confirmDialog("Reset your current plan? This cannot be undone.", () => {
+        state.plan = emptyPlan();
+        state.extraSems = 0;
+        saveState();
+        toast("Plan reset");
+        renderProfile();
+      });
     };
     $("exportJson").onclick = () => {
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -685,6 +732,30 @@
     node.textContent = message;
     node.classList.add("show");
     setTimeout(() => node.classList.remove("show"), 1800);
+  }
+
+  function confirmDialog(message, onOk) {
+    let modal = $("confirmModal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "confirmModal";
+      modal.className = "confirm-modal";
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `<div class="confirm-card">
+      <div class="confirm-icon">!</div>
+      <p>${message}</p>
+      <div class="confirm-actions">
+        <button class="button" data-confirm-cancel>Cancel</button>
+        <button class="button solid" data-confirm-ok>OK</button>
+      </div>
+    </div>`;
+    modal.classList.add("show");
+    modal.querySelector("[data-confirm-cancel]").onclick = () => modal.classList.remove("show");
+    modal.querySelector("[data-confirm-ok]").onclick = () => {
+      modal.classList.remove("show");
+      onOk();
+    };
   }
 
   function boot() {
