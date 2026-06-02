@@ -5,6 +5,7 @@
   const MAX_CR = 20;
   const DEANS_LIST = 3.67;
   const FAIL_GRADES = new Set(["C-", "D+", "D", "F"]);
+  const LOCK_ICON = "🔒";
   const PATHWAY_COURSES = {
     L1: new Set(["MPB1013", "MPB2013", "MPB3013"]),
     L2: new Set(["MPB2013", "MPB3013"]),
@@ -101,6 +102,14 @@
     return plannedItems().reduce((sum, item) => sum + courseCredits(item), 0);
   }
 
+  function hasPassingGrade(item) {
+    return item.grade && !FAIL_GRADES.has(item.grade);
+  }
+
+  function completedCredits() {
+    return plannedItems().filter(hasPassingGrade).reduce((sum, item) => sum + courseCredits(item), 0);
+  }
+
   function creditsBefore(sem) {
     return plannedItems().filter((item) => item.sem < sem).reduce((sum, item) => sum + courseCredits(item), 0);
   }
@@ -113,22 +122,44 @@
   function computeGPA() {
     let cumPoints = 0;
     let cumCredits = 0;
+    let plannedCourses = 0;
+    let gradedCourses = 0;
     const per = [];
     for (let sem = 1; sem <= totalSems(); sem++) {
       let points = 0;
       let credits = 0;
-      (state.plan[sem] || []).forEach((item) => {
+      const semItems = state.plan[sem] || [];
+      let semGradedCourses = 0;
+      semItems.forEach((item) => {
         const c = getCourse(item.code);
         const p = gp(item.grade);
         if (!c || p === null) return;
+        semGradedCourses += 1;
+        gradedCourses += 1;
         points += p * c.cr;
         credits += c.cr;
       });
+      plannedCourses += semItems.length;
       cumPoints += points;
       cumCredits += credits;
-      per.push({ sem, credits, gpa: credits ? points / credits : null, cgpa: cumCredits ? cumPoints / cumCredits : null });
+      per.push({
+        sem,
+        credits,
+        plannedCourses: semItems.length,
+        gradedCourses: semGradedCourses,
+        allGraded: semItems.length > 0 && semGradedCourses === semItems.length,
+        gpa: credits ? points / credits : null,
+        cgpa: cumCredits ? cumPoints / cumCredits : null
+      });
     }
-    return { per, cgpa: cumCredits ? cumPoints / cumCredits : 0, gradedCredits: cumCredits };
+    return {
+      per,
+      cgpa: cumCredits ? cumPoints / cumCredits : 0,
+      gradedCredits: cumCredits,
+      plannedCourses,
+      gradedCourses,
+      allPlannedGraded: plannedCourses > 0 && gradedCourses === plannedCourses
+    };
   }
 
   function prereqStatus(code, sem) {
@@ -154,13 +185,14 @@
     return { ok: missing.length === 0, missing };
   }
 
-  function componentProgress() {
+  function componentProgress(options = {}) {
     const p = currentProgram();
     const byCat = {};
     p.components.forEach((comp) => {
       byCat[comp.l] = { ...comp, done: 0 };
     });
-    plannedItems().forEach((item) => {
+    const items = options.completedOnly ? plannedItems().filter(hasPassingGrade) : plannedItems();
+    items.forEach((item) => {
       const c = getCourse(item.code);
       if (c && byCat[c.cat]) byCat[c.cat].done += c.cr;
     });
@@ -279,16 +311,17 @@
   }
 
   function programOptions() {
-    return Object.values(PROGRAMS).map((p) => `<option value="${p.id}" ${p.id === state.programId ? "selected" : ""}>${p.short}</option>`).join("");
+    const label = (p) => `${p.nameEn || p.short} (${p.short.replace(/[()]/g, "")})`;
+    return Object.values(PROGRAMS).map((p) => `<option value="${p.id}" ${p.id === state.programId ? "selected" : ""}>${label(p)}</option>`).join("");
   }
 
   function renderChrome(active) {
     const nav = [
       ["index.html", "Overview"],
       ["planner.html", "Planner"],
-      ["audit.html", "Audit"],
-      ["analytics.html", "Analytics"],
-      ["courses.html", "Courses"],
+      ["audit.html", "Graduation Checklist"],
+      ["analytics.html", "GPA & Credits"],
+      ["courses.html", "Course List"],
       ["profile.html", "Profile"],
       ["help.html", "Help"]
     ];
@@ -325,7 +358,7 @@
       }
       card.innerHTML = `<div class="eyebrow">Private browser save</div>
         <strong>${relativeTime(state.lastSaved)}</strong>
-        <p>Saved on this device. Export a backup from Profile.</p>`;
+        <p>Saved on this device. Download a backup file from Profile.</p>`;
     });
   }
 
@@ -400,9 +433,9 @@
     if (heroProgram) heroProgram.textContent = p.nameEn || p.short;
     $("heroMeta").textContent = `${p.total} credits / ${p.semCount} semesters / ${p.courses.length} course entries`;
     $("statCredits").textContent = `${total}/${p.total}`;
-    $("statCgpa").textContent = g.cgpa ? g.cgpa.toFixed(2) : "--";
+    $("statCgpa").textContent = g.allPlannedGraded ? g.cgpa.toFixed(2) : "--";
     $("statCourses").textContent = plannedItems().length;
-    $("statStatus").textContent = total >= p.total && g.cgpa >= 2 ? "Ready" : "In progress";
+    $("statStatus").textContent = total >= p.total && g.allPlannedGraded && g.cgpa >= 2 ? "Ready" : "In progress";
     renderComponents("componentGrid");
     renderSemesterBars("semesterBars");
   }
@@ -419,6 +452,11 @@
         <div class="progress"><span style="--w:${pct}%"></span></div>
       </div>`;
     }).join("");
+  }
+
+  function categoryLabel(cat) {
+    const component = currentProgram().components.find((item) => item.l === cat);
+    return component ? `Category ${cat}: ${component.en}` : `Category ${cat}`;
   }
 
   function renderSemesterBars(id) {
@@ -462,23 +500,25 @@
         const c = getCourse(item.code);
         if (!c) return "";
         const status = prereqStatus(c.code, sem);
+        const moveOptions = Array.from({ length: totalSems() }, (_, i) => i + 1).filter((target) => target !== sem);
         return `<article class="course cat-${c.cat}">
-          <div class="course-title">${c.code} / ${c.en}</div>
-          <div class="muted">${c.ms || ""}</div>
-          <div class="course-meta">
-            <span class="pill">${c.cr} credits</span><span class="pill cat-pill cat-${c.cat}">Cat ${c.cat}</span>
-            <span class="pill ${status.ok ? "ok" : "bad"}">${status.ok ? "Ready" : status.missing.join(", ")}</span>
+          <div class="course-code">${c.code}</div>
+          <div class="course-main">
+            <div class="course-title">${c.en}</div>
+            <div class="course-sub">${c.ms || ""} · ${categoryLabel(c.cat)}</div>
+            ${status.ok ? "" : `<div class="course-lock">${LOCK_ICON} ${status.missing.join(", ")}</div>`}
           </div>
+          <div class="course-credit">${c.cr} CR</div>
           <div class="inline-actions">
-            <select class="select" data-grade="${sem}:${index}">
-              <option value="">Grade</option>
+            <select class="select grade-select" data-grade="${sem}:${index}">
+              <option value="">--</option>
               ${GRADES.map((g) => `<option value="${g.g}" ${item.grade === g.g ? "selected" : ""}>${g.g}</option>`).join("")}
             </select>
             <select class="select compact-select" data-move-target="${sem}:${index}">
-              ${Array.from({ length: totalSems() }, (_, i) => i + 1).map((target) => `<option value="${target}" ${target === sem ? "selected" : ""}>Move to Sem ${target}</option>`).join("")}
+              <option value="">Move to...</option>
+              ${moveOptions.map((target) => `<option value="${target}">Semester ${target}</option>`).join("")}
             </select>
-            <button class="mini-button" data-move="${sem}:${index}">Move</button>
-            <button class="mini-button" data-remove="${sem}:${index}">Remove</button>
+            <button class="mini-button remove-button" data-remove="${sem}:${index}" title="Remove this subject" aria-label="Remove this subject">&times;</button>
           </div>
         </article>`;
       }).join("");
@@ -519,10 +559,10 @@
         renderPlanner();
       };
     });
-    document.querySelectorAll("[data-move]").forEach((button) => {
-      button.onclick = () => {
-        const [sem, index] = button.dataset.move.split(":").map(Number);
-        const target = Number(document.querySelector(`[data-move-target="${sem}:${index}"]`).value);
+    document.querySelectorAll("[data-move-target]").forEach((select) => {
+      select.onchange = () => {
+        const [sem, index] = select.dataset.moveTarget.split(":").map(Number);
+        const target = Number(select.value);
         if (!target || target === sem) return;
         const [item] = state.plan[sem].splice(index, 1);
         state.plan[target] = state.plan[target] || [];
@@ -566,7 +606,7 @@
       options.push(`<option disabled>── ${component.l}. ${component.en.toUpperCase()} ──</option>`);
       list.forEach((course) => {
         const label = optionLabel(course);
-        const disabled = course.disabled ? "disabled" : "";
+        const disabled = course.disabled || !course.status.ok ? "disabled" : "";
         options.push(`<option value="${course.code}" ${disabled}>${label}</option>`);
       });
       return `<optgroup label="${component.l}. ${component.en}">${options.join("")}</optgroup>`;
@@ -576,8 +616,8 @@
   function optionLabel(course) {
     if (course.failedPlaced) return `Retake Sem ${course.placed.sem} / ${course.code} / ${course.en} (${course.cr}cr)`;
     if (course.placed) return `Sem ${course.placed.sem} / ${course.code} / ${course.en} (${course.cr}cr)`;
-    if (course.disabled) return `Locked / ${course.code} / ${course.en} (${course.cr}cr) / ${course.lockReason}`;
-    if (!course.status.ok) return `Locked / ${course.code} / ${course.en} (${course.cr}cr) / ${course.status.missing.join(", ")}`;
+    if (course.disabled) return `${LOCK_ICON} ${course.code} · ${course.en} (${course.cr}cr) · ${course.lockReason}`;
+    if (!course.status.ok) return `${LOCK_ICON} ${course.code} · ${course.en} (${course.cr}cr) · ${course.status.missing.join(", ")}`;
     return `${course.code} / ${course.en} (${course.cr}cr)`;
   }
 
@@ -612,13 +652,21 @@
 
   function renderAudit() {
     const p = currentProgram();
-    const byCat = componentProgress();
-    const total = plannedCredits();
+    const planned = plannedItems();
+    const gradedCount = planned.filter((item) => item.grade).length;
+    const failedCount = planned.filter((item) => item.grade && FAIL_GRADES.has(item.grade)).length;
+    const byCat = componentProgress({ completedOnly: true });
+    const total = completedCredits();
     const g = computeGPA();
-    const items = Object.values(byCat).map((comp) => ({ ok: comp.done >= comp.req, label: `${comp.l}. ${comp.en}`, value: `${comp.done}/${comp.req} cr` }));
-    items.push({ ok: total >= p.total, label: "Total credits", value: `${total}/${p.total}` });
-    items.push({ ok: g.cgpa >= 2, label: "Minimum CGPA 2.00", value: g.cgpa ? g.cgpa.toFixed(2) : "--" });
-    $("auditSummary").innerHTML = `<h2>${items.every((item) => item.ok) ? "Eligible to graduate" : "Not yet eligible"}</h2><p class="muted">${items.filter((item) => !item.ok).length} requirement(s) remaining.</p>`;
+    const items = [
+      { ok: planned.length > 0 && gradedCount === planned.length, label: "All planned courses graded", value: `${gradedCount}/${planned.length} courses` },
+      { ok: failedCount === 0, label: "No failed courses pending retake", value: failedCount ? `${failedCount} course(s)` : "OK" }
+    ];
+    Object.values(byCat).forEach((comp) => items.push({ ok: comp.done >= comp.req, label: `${comp.l}. ${comp.en}`, value: `${comp.done}/${comp.req} cr` }));
+    items.push({ ok: total >= p.total, label: "Completed credits", value: `${total}/${p.total}` });
+    items.push({ ok: g.allPlannedGraded && g.cgpa >= 2, label: "Minimum CGPA 2.00", value: g.allPlannedGraded ? g.cgpa.toFixed(2) : `${g.gradedCourses}/${g.plannedCourses} courses graded` });
+    const remaining = items.filter((item) => !item.ok).length;
+    $("auditSummary").innerHTML = `<h2>${items.every((item) => item.ok) ? "Eligible to graduate" : "Not yet eligible"}</h2><p class="muted">${remaining} checklist item(s) still incomplete.</p>`;
     $("auditList").innerHTML = items.map((item) => `<div class="audit-item"><strong class="${item.ok ? "ok" : "bad"}">${item.ok ? "OK" : "NO"}</strong><span>${item.label}</span><span>${item.value}</span></div>`).join("");
     renderAlerts();
   }
@@ -630,25 +678,49 @@
     const p = currentProgram();
     for (let sem = 1; sem <= totalSems(); sem++) {
       const credits = (state.plan[sem] || []).reduce((sum, item) => sum + courseCredits(item), 0);
-      if (credits > 0 && credits < MIN_CR && !(p.shortSems || []).includes(sem)) issues.push(`Semester ${sem}: ${credits} credits is below ${MIN_CR}.`);
-      if (credits > MAX_CR) issues.push(`Semester ${sem}: ${credits} credits is above ${MAX_CR}.`);
+      const ungraded = [];
+      if (credits > 0 && credits < MIN_CR && !(p.shortSems || []).includes(sem)) {
+        issues.push({ kind: "load", tag: "Credits", mark: "!", title: `Semester ${sem} is underloaded`, detail: `${credits}/${MIN_CR} minimum credits planned.` });
+      }
+      if (credits > MAX_CR) {
+        issues.push({ kind: "load", tag: "Credits", mark: "!", title: `Semester ${sem} is overloaded`, detail: `${credits}/${MAX_CR} maximum credits planned.` });
+      }
       (state.plan[sem] || []).forEach((item) => {
         const status = prereqStatus(item.code, sem);
-        if (!status.ok) issues.push(`${item.code} in Semester ${sem}: ${status.missing.join(", ")}.`);
-        if (item.grade && FAIL_GRADES.has(item.grade)) issues.push(`${item.code} has a failing grade and should be retaken.`);
+        if (!status.ok) {
+          issues.push({ kind: "rule", tag: "Rule", mark: LOCK_ICON, title: `${item.code} is locked`, detail: `Semester ${sem}: ${status.missing.join(", ")}.` });
+        }
+        if (!item.grade) ungraded.push(item.code);
+        if (item.grade && FAIL_GRADES.has(item.grade)) {
+          issues.push({ kind: "retake", tag: "Retake", mark: "R", title: `${item.code} needs retake`, detail: "This grade does not count as completed credit." });
+        }
       });
+      if (ungraded.length) {
+        issues.push({ kind: "grades", tag: "Grades", mark: "A+", title: `Semester ${sem}: add missing grades`, detail: `${ungraded.length} course(s) still blank. No need to panic, just fill them after results.` });
+      }
     }
-    holder.innerHTML = issues.length ? issues.map((msg) => `<div class="audit-item"><strong class="warn">Note</strong><span>${msg}</span><span></span></div>`).join("") : `<p class="muted">No planning alerts right now.</p>`;
+    const count = $("alertCount");
+    if (count) count.textContent = issues.length ? `${issues.length} item${issues.length === 1 ? "" : "s"}` : "Clear";
+    holder.innerHTML = issues.length ? `<div class="action-board">${issues.map((issue) => `
+      <article class="fix-card ${issue.kind}">
+        <div class="fix-mark">${issue.mark}</div>
+        <div class="fix-copy">
+          <span>${issue.tag}</span>
+          <strong>${issue.title}</strong>
+          <p>${issue.detail}</p>
+        </div>
+      </article>
+    `).join("")}</div>` : `<div class="empty-fix"><strong>All clear for now.</strong><p>No planning alerts right now.</p></div>`;
   }
 
   function renderAnalytics() {
     const g = computeGPA();
-    $("analyticsCgpa").textContent = g.cgpa ? g.cgpa.toFixed(2) : "--";
-    $("analyticsStanding").textContent = g.cgpa >= DEANS_LIST ? "Dean's List range" : g.cgpa >= 2 ? "Good standing" : "No graded credits";
+    $("analyticsCgpa").textContent = g.allPlannedGraded ? g.cgpa.toFixed(2) : "--";
+    $("analyticsStanding").textContent = !g.gradedCourses ? "No graded credits" : !g.allPlannedGraded ? `${g.gradedCourses}/${g.plannedCourses} courses graded` : g.cgpa >= DEANS_LIST ? "Dean's List range" : g.cgpa >= 2 ? "Good standing" : "At risk";
     $("gpaRows").innerHTML = g.per.map((row) => `<div class="bar-row">
       <span>Sem ${row.sem}</span>
-      <div class="bar"><span style="--w:${Math.round(((row.gpa || 0) / 4) * 100)}%"></span></div>
-      <span>${row.gpa ? row.gpa.toFixed(2) : "--"}</span>
+      <div class="bar"><span style="--w:${row.allGraded ? Math.round(((row.gpa || 0) / 4) * 100) : 0}%"></span></div>
+      <span>${row.allGraded && row.gpa !== null ? row.gpa.toFixed(2) : row.gradedCourses ? `${row.gradedCourses}/${row.plannedCourses}` : "--"}</span>
     </div>`).join("");
     renderSemesterBars("creditBars");
   }
@@ -712,10 +784,10 @@
         state = Object.assign(defaultState(), imported);
         normalizeState();
         saveState();
-        toast("Plan imported");
+        toast("Backup restored");
         setTimeout(() => location.reload(), 500);
       } catch (err) {
-        toast("Import failed: invalid plan file");
+        toast("Restore failed: choose a valid backup file");
       }
     };
     reader.readAsText(file);

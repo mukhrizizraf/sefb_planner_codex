@@ -22,9 +22,9 @@ https://YOUR-USERNAME.github.io/sefb-degree-planner/
 
 - `index.html` - academic overview
 - `planner.html` - semester planning
-- `audit.html` - graduation audit and alerts
-- `analytics.html` - GPA and credit analytics
-- `courses.html` - searchable course catalogue
+- `audit.html` - graduation checklist and alerts
+- `analytics.html` - GPA and credit progress
+- `courses.html` - searchable course list
 - `profile.html` - storage and plan settings
 - `help.html` - student usage guide
 
@@ -33,4 +33,4 @@ https://YOUR-USERNAME.github.io/sefb-degree-planner/
 - The planner stores data in the student's own browser using `localStorage`.
 - No login or backend server is required.
 - If a student changes browser/device, their saved plan will not automatically follow them.
-- Students can export their plan as JSON from the Profile page.
+- Students can download a backup file from the Profile page.

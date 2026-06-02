@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SEFB Planner / Degree Audit</title>
+  <title>SEFB Planner / Graduation Checklist</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/img/sefb.png">
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260603c">
 </head>
 <body data-page="audit">
   <div class="site-shell">
@@ -19,19 +19,29 @@
     <main class="main">
       <div class="container">
         <div class="topbar">
-          <div><div class="eyebrow">Degree audit</div><h2>Graduation Readiness</h2></div>
+          <div><div class="eyebrow">Graduation checklist</div><h2>Graduation Readiness</h2></div>
           <div class="program-controls"><select class="select" data-program-select></select><span id="trackControl"></span><span id="pathControl"></span><span id="langControl"></span></div>
         </div>
         <section class="grid cols-2">
           <div class="panel" id="auditSummary"></div>
-          <div class="panel"><h3>Planning alerts</h3><div id="alerts"></div></div>
+          <div class="panel alert-panel">
+            <div class="alert-heading">
+              <div>
+                <div class="eyebrow">Next actions</div>
+                <h3>Fix these first</h3>
+              </div>
+              <span class="alert-count" id="alertCount">--</span>
+            </div>
+            <div id="alerts"></div>
+          </div>
         </section>
-        <div class="section-head"><h2>Requirements</h2><a class="button" href="courses.html">Browse courses</a></div>
+        <div class="section-head"><h2>Requirements</h2><a class="button" href="courses.html">Open course list</a></div>
         <section class="panel" id="auditList"></section>
       </div>
     </main>
   </div>
   <script src="assets/js/sefb-data.js"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app.js?v=20260603c"></script>
 </body>
 </html>
+

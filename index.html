@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/img/sefb.png">
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260603c">
 </head>
 <body data-page="index">
   <div class="site-shell">
@@ -43,7 +43,7 @@
             <p class="lead">Choose your programme, build every semester, check prerequisites, monitor credit requirements, and project CGPA before registration decisions become expensive.</p>
             <div class="hero-actions">
               <a class="button solid" href="planner.html">Open planner</a>
-              <a class="button" href="audit.html">Check graduation audit</a>
+              <a class="button" href="audit.html">Check graduation checklist</a>
             </div>
             <div class="hero-metrics">
               <div class="hero-metric"><strong>5</strong><span class="eyebrow">SEFB programmes</span></div>
@@ -56,32 +56,29 @@
         <section class="grid cols-4">
           <div class="stat"><div class="label">Credits</div><div class="stat-value" id="statCredits">--</div></div>
           <div class="stat"><div class="label">Projected CGPA</div><div class="stat-value" id="statCgpa">--</div></div>
-          <div class="stat"><div class="label">Courses</div><div class="stat-value" id="statCourses">--</div></div>
+          <div class="stat"><div class="label">Planned courses</div><div class="stat-value" id="statCourses">--</div></div>
           <div class="stat"><div class="label">Standing</div><div class="stat-value" id="statStatus">--</div></div>
         </section>
 
         <div class="section-head">
           <h2>Requirement Progress</h2>
-          <a class="button" href="audit.html">Full audit</a>
+          <a class="button" href="audit.html">Full graduation checklist</a>
         </div>
         <section class="grid cols-3" id="componentGrid"></section>
 
         <section class="visual-band">
           <div>
             <div class="eyebrow">Designed for actual advising work</div>
-            <h2>From overview to audit, the planner stays visual and practical.</h2>
+            <h2>Built for real planning conversations, not handbook hunting.</h2>
             <p class="lead">Students can see degree progress, semester load, course choices, and graduation readiness without digging through handbook tables.</p>
             <div class="hero-actions">
-              <a class="button solid" href="courses.html">Browse courses</a>
+              <a class="button solid" href="courses.html">Open course list</a>
               <a class="button" href="help.html">Student guide</a>
             </div>
           </div>
-          <div class="preview-wall">
-            <div class="preview-shot"><img src="assets/img/preview-overview.jpg" alt="Academic overview preview"></div>
-            <div class="preview-shot"><img src="assets/img/preview-planner.jpg" alt="Semester planner preview"></div>
-            <div class="preview-shot"><img src="assets/img/preview-audit.jpg" alt="Degree audit preview"></div>
-            <div class="preview-shot"><img src="assets/img/preview-semester-load.jpg" alt="Semester load preview"></div>
-          </div>
+          <figure class="visual-photo">
+            <img src="assets/img/planner-advising-workspace.png" alt="Academic planning workspace with a dashboard on a laptop">
+          </figure>
         </section>
 
         <section class="feature-list">
@@ -104,13 +101,14 @@
 
         <div class="section-head">
           <h2>Semester Load</h2>
-          <a class="button" href="analytics.html">Analytics</a>
+          <a class="button" href="analytics.html">GPA & credits</a>
         </div>
         <section class="panel" id="semesterBars"></section>
       </div>
     </main>
   </div>
   <script src="assets/js/sefb-data.js"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app.js?v=20260603c"></script>
 </body>
 </html>
+

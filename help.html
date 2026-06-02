@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/img/sefb.png">
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260603c">
 </head>
 <body data-page="help">
   <div class="site-shell">
@@ -22,39 +22,115 @@
           <div><div class="eyebrow">Help</div><h2>How to Use the Planner</h2></div>
           <div class="program-controls"><select class="select" data-program-select></select><span id="trackControl"></span><span id="pathControl"></span><span id="langControl"></span></div>
         </div>
-        <section class="hero">
+        <section class="guide-intro">
           <div>
-            <div class="eyebrow">Private / browser-based / GitHub Pages ready</div>
-            <h1>Plan carefully, then keep a backup.</h1>
-            <p class="lead">This planner checks curriculum progress, prerequisites, credit load, and projected GPA using the embedded SEFB programme data.</p>
+            <div class="eyebrow">Quick screenshot tour</div>
+            <h1>Follow the arrows. No stress.</h1>
+            <p class="lead">A quick visual tour of the screens students actually use: set programme, plan semesters, enter grades, then check graduation readiness.</p>
+          </div>
+          <div class="guide-callout">
+            <div class="eyebrow">Do not skip this</div>
+            <strong>Recommended plan is just a starter.</strong>
+            <p>It only fills the schedule. Graduation readiness needs grades for every planned course.</p>
           </div>
         </section>
-        <section class="grid cols-2 help-list">
-          <article class="panel">
-            <div class="eyebrow">1. Choose your programme</div>
-            <h3>Start from the top controls</h3>
-            <p class="muted">Pick your programme, specialization track if available, English pathway, and foreign language family. Changing programme resets the active plan because each programme has a different structure.</p>
+
+        <section class="screenshot-guide" aria-label="Screenshot guide">
+          <article class="shot-card cat-C">
+            <div class="shot-copy">
+              <div class="step-number">Step 1</div>
+              <h3>Pick the correct programme first</h3>
+              <p>Use the top dropdowns for programme, specialization, English path, and language. If this part is wrong, the rest of the planner will be wrong too.</p>
+            </div>
+            <div class="shot-frame">
+              <img src="assets/img/preview-overview-latest.png" alt="Overview page preview">
+              <span class="shot-note note-top">Start with these dropdowns</span>
+              <span class="shot-arrow arrow-down"></span>
+            </div>
           </article>
-          <article class="panel">
-            <div class="eyebrow">2. Build semesters</div>
-            <h3>Search, add, move</h3>
-            <p class="muted">Use the Planner page to search courses inside each semester. Locked courses can still be added, but the Audit page will explain what rule is not satisfied.</p>
+
+          <article class="shot-card cat-D flip">
+            <div class="shot-copy">
+              <div class="step-number">Step 2</div>
+              <h3>Build the semester plan</h3>
+              <p>Open Planner. Load the recommended structure if you want a fast start, then add or move courses until the semesters make sense.</p>
+              <a class="mini-link" href="planner.html">Open Planner</a>
+            </div>
+            <div class="shot-frame">
+              <img src="assets/img/preview-planner-latest.png" alt="Planner page preview">
+              <span class="shot-note note-left">Add courses here</span>
+              <span class="shot-note note-bottom">Move course by changing semester</span>
+              <span class="shot-arrow arrow-right"></span>
+            </div>
           </article>
-          <article class="panel">
-            <div class="eyebrow">3. Check audit</div>
-            <h3>Requirements are grouped by category</h3>
-            <p class="muted">The Audit page compares your planned credits against the official category requirements and highlights prerequisite, fail-grade, and credit-load warnings.</p>
+
+          <article class="shot-card cat-B">
+            <div class="shot-copy">
+              <div class="step-number">Step 3</div>
+              <h3>Enter grades course by course</h3>
+              <p>After results are out, pick a grade inside each course card. Blank grade means incomplete, so CGPA and graduation status will stay blocked.</p>
+            </div>
+            <div class="shot-frame">
+              <img src="assets/img/preview-planner-latest.png" alt="Course card grade controls preview">
+              <span class="shot-note note-grade">Grade dropdown lives here</span>
+              <span class="shot-arrow arrow-grade"></span>
+            </div>
           </article>
-          <article class="panel">
-            <div class="eyebrow">4. Protect your work</div>
-            <h3>Export before switching devices</h3>
-            <p class="muted">Your plan is saved only in the current browser. Use Profile to export a JSON backup, then import it on another device or browser.</p>
+
+          <article class="shot-card cat-G flip">
+            <div class="shot-copy">
+              <div class="step-number">Step 4</div>
+              <h3>Use the Graduation Checklist</h3>
+              <p>This is the reality-check screen. It tells you what is still missing: grades, credits, prerequisites, failed courses, and category requirements.</p>
+              <a class="mini-link" href="audit.html">Open Graduation Checklist</a>
+            </div>
+            <div class="shot-frame">
+              <img src="assets/img/preview-audit-latest.png" alt="Graduation checklist preview">
+              <span class="shot-note note-top">Look at this status first</span>
+              <span class="shot-note note-right">No panic. Fix these one by one.</span>
+              <span class="shot-arrow arrow-down"></span>
+            </div>
+          </article>
+
+          <article class="shot-card cat-A">
+            <div class="shot-copy">
+              <div class="step-number">Step 5</div>
+              <h3>Check GPA and credit load</h3>
+              <p>GPA & Credits shows semester GPA and credit load. If only some grades are entered, it shows progress instead of pretending the CGPA is final.</p>
+              <a class="mini-link" href="analytics.html">Open GPA & Credits</a>
+            </div>
+            <div class="shot-frame">
+              <img src="assets/img/preview-gpa-latest.png" alt="GPA and credit load preview">
+              <span class="shot-note note-bottom">Watch heavy semesters here</span>
+              <span class="shot-arrow arrow-right"></span>
+            </div>
+          </article>
+
+          <article class="shot-card cat-F final-shot">
+            <div class="shot-copy">
+              <div class="step-number">Step 6</div>
+              <h3>Download a backup before you leave</h3>
+              <p>The planner saves in this browser only. Before changing device or clearing browser data, open Profile and download a backup file.</p>
+              <a class="mini-link" href="profile.html">Open Profile</a>
+            </div>
+            <div class="backup-demo">
+              <div class="fake-window-bar">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="fake-profile">
+                <div class="fake-heading">Profile</div>
+                <button class="button solid" type="button">Download backup file</button>
+                <button class="button danger" type="button">Reset current plan</button>
+              </div>
+              <span class="shot-note note-backup">Use this before switching device</span>
+            </div>
           </article>
         </section>
       </div>
     </main>
   </div>
   <script src="assets/js/sefb-data.js"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app.js?v=20260603c"></script>
 </body>
 </html>
+

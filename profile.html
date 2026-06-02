@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/img/sefb.png">
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260603c">
 </head>
 <body data-page="profile">
   <div class="site-shell">
@@ -37,19 +37,20 @@
         <div class="section-head"><h2>Actions</h2></div>
         <section class="panel">
           <div class="inline-actions">
-            <button class="button solid" id="exportJson">Export JSON</button>
+            <button class="button solid" id="exportJson">Download backup file</button>
             <button class="button danger" id="resetPlan">Reset current plan</button>
           </div>
         </section>
-        <div class="section-head"><h2>Import Backup</h2></div>
+        <div class="section-head"><h2>Restore From Backup</h2></div>
         <section class="panel">
-          <p class="muted">Import a JSON file previously exported from this planner. The imported file replaces the plan saved in this browser.</p>
+          <p class="muted">Choose a backup file previously downloaded from this planner. Restoring it will replace the plan saved in this browser.</p>
           <input class="file-input" id="importJson" type="file" accept="application/json,.json">
         </section>
       </div>
     </main>
   </div>
   <script src="assets/js/sefb-data.js"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app.js?v=20260603c"></script>
 </body>
 </html>
+
