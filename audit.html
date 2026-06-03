@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/img/sefb.png">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260603c">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260604c">
 </head>
 <body data-page="audit">
   <div class="site-shell">
@@ -18,30 +18,85 @@
     </aside>
     <main class="main">
       <div class="container">
-        <div class="topbar">
-          <div><div class="eyebrow">Graduation checklist</div><h2>Graduation Readiness</h2></div>
-          <div class="program-controls"><select class="select" data-program-select></select><span id="trackControl"></span><span id="pathControl"></span><span id="langControl"></span></div>
-        </div>
-        <section class="grid cols-2">
-          <div class="panel" id="auditSummary"></div>
-          <div class="panel alert-panel">
-            <div class="alert-heading">
-              <div>
-                <div class="eyebrow">Next actions</div>
-                <h3>Fix these first</h3>
-              </div>
-              <span class="alert-count" id="alertCount">--</span>
-            </div>
-            <div id="alerts"></div>
+        <section class="audit-hero-head">
+          <div>
+            <div class="eyebrow">Graduation</div>
+            <h2>Graduation Checklist.</h2>
+            <p class="muted" id="auditDegree">--</p>
           </div>
+          <a class="button" href="planner.html">Edit plan</a>
         </section>
-        <div class="section-head"><h2>Requirements</h2><a class="button" href="courses.html">Open course list</a></div>
-        <section class="panel" id="auditList"></section>
+
+        <section class="audit-status" id="auditSummary"></section>
+
+        <section class="audit-progress-block">
+          <div class="section-head compact">
+            <div>
+              <div class="eyebrow">Requirements</div>
+              <h2>Degree Progress</h2>
+            </div>
+          </div>
+          <section class="panel audit-progress-list" id="auditList"></section>
+        </section>
+
+        <section class="audit-info-grid">
+          <article class="audit-practice-card">
+            <img src="assets/img/industrial-training-campus.png" alt="Students working in a modern campus courtyard">
+            <div>
+              <div class="eyebrow">Professional practice</div>
+              <h3>Industrial Training</h3>
+              <p class="muted">The final practical placement unlocks only after core requirements are complete.</p>
+              <div class="hero-actions">
+                <a class="button solid" href="planner.html">View in planner</a>
+                <a class="button" href="courses.html">Course list</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel audit-advisor">
+            <div class="eyebrow">Academic advisor</div>
+            <h3>SEFB Advisory Office</h3>
+            <p class="muted">Use this checklist as a planning guide before final faculty confirmation.</p>
+            <div id="alerts"></div>
+          </article>
+        </section>
+
+        <section class="audit-achievements">
+          <div class="section-head compact">
+            <div>
+              <div class="eyebrow">Progress</div>
+              <h2>Milestones</h2>
+            </div>
+          </div>
+          <div class="achievement-grid" id="auditPortfolio"></div>
+        </section>
+
+        <footer class="audit-footer">
+          <div class="audit-footer-brand">
+            <img class="brand-mark" src="assets/img/sefb.png" alt="SEFB">
+            <div>
+              <strong>SEFB <em>Degree Planner</em></strong>
+              <p>A practical planning tool for SEFB students.</p>
+            </div>
+          </div>
+          <div>
+            <strong>Planner</strong>
+            <a href="index.html">Overview</a>
+            <a href="planner.html">Semester Planner</a>
+            <a href="analytics.html">CGPA Simulation</a>
+          </div>
+          <div>
+            <strong>Academic</strong>
+            <a href="audit.html">Graduation Checklist</a>
+            <a href="courses.html">Course List</a>
+            <a href="help.html">Help</a>
+          </div>
+        </footer>
       </div>
     </main>
   </div>
   <script src="assets/js/sefb-data.js"></script>
-  <script src="assets/js/app.js?v=20260603c"></script>
+  <script src="assets/js/app.js?v=20260604c"></script>
 </body>
 </html>
 

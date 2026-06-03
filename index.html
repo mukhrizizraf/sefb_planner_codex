@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/img/sefb.png">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260603c">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260604c">
 </head>
 <body data-page="index">
   <div class="site-shell">
@@ -23,19 +23,6 @@
     </aside>
     <main class="main">
       <div class="container">
-        <div class="topbar">
-          <div>
-            <div class="eyebrow">Academic command centre</div>
-            <h2>Overview</h2>
-          </div>
-          <div class="program-controls">
-            <select class="select" data-program-select></select>
-            <span id="trackControl"></span>
-            <span id="pathControl"></span>
-            <span id="langControl"></span>
-          </div>
-        </div>
-
         <section class="hero home-hero">
           <div class="hero-copy">
             <div class="eyebrow" id="heroMeta"></div>
@@ -51,6 +38,37 @@
               <div class="hero-metric"><strong>Live</strong><span class="eyebrow">CGPA projection</span></div>
             </div>
           </div>
+        </section>
+
+        <section class="cgpa-overview" id="cgpaOverview">
+          <article class="cgpa-gauge-card">
+            <div class="cgpa-gauge" id="cgpaGauge">
+              <div class="cgpa-gauge-core">
+                <strong id="cgpaGaugeValue">--</strong>
+                <span>CGPA index</span>
+              </div>
+            </div>
+            <h2 id="cgpaGaugeStanding">Awaiting grades</h2>
+            <p id="cgpaGaugeNote" class="muted">Enter grades to calculate your honours class.</p>
+            <div class="cgpa-band-legend" aria-label="CGPA classification legend">
+              <span><i class="band-dot fail"></i>Fail (&lt;2.0)</span>
+              <span><i class="band-dot lower"></i>Lower 2nd (2.0-2.99)</span>
+              <span><i class="band-dot upper"></i>Upper 2nd (3.0-3.66)</span>
+              <span><i class="band-dot first"></i>First Class (&ge;3.67)</span>
+            </div>
+          </article>
+
+          <article class="cgpa-standing-card">
+            <div class="eyebrow">Current standing</div>
+            <h2 id="cgpaStandingTitle">Awaiting grades</h2>
+            <p id="cgpaStandingText">Your standing will appear after every planned course has a grade.</p>
+            <p class="muted">Your programme · <strong id="overviewProgramName">--</strong></p>
+            <div class="standing-stats">
+              <div class="stat"><div class="stat-value" id="overviewCreditsPlanned">--</div><div class="label">Credits planned</div></div>
+              <div class="stat"><div class="stat-value" id="overviewGradedCourses">--</div><div class="label">Graded courses</div></div>
+              <div class="stat"><div class="stat-value" id="overviewGradedCredits">--</div><div class="label">Graded credits</div></div>
+            </div>
+          </article>
         </section>
 
         <section class="grid cols-4">
@@ -69,7 +87,7 @@
         <section class="visual-band">
           <div>
             <div class="eyebrow">Designed for actual advising work</div>
-            <h2>Built for real planning conversations, not handbook hunting.</h2>
+            <h2>Plan your degree without flipping through pages.</h2>
             <p class="lead">Students can see degree progress, semester load, course choices, and graduation readiness without digging through handbook tables.</p>
             <div class="hero-actions">
               <a class="button solid" href="courses.html">Open course list</a>
@@ -101,14 +119,45 @@
 
         <div class="section-head">
           <h2>Semester Load</h2>
-          <a class="button" href="analytics.html">GPA & credits</a>
+          <a class="button" href="analytics.html">CGPA Simulation</a>
         </div>
         <section class="panel" id="semesterBars"></section>
+
+        <footer class="audit-footer site-footer">
+          <div class="audit-footer-brand">
+            <img class="brand-mark" src="assets/img/sefb.png" alt="SEFB">
+            <div>
+              <strong>SEFB <em>Degree Planner</em></strong>
+              <p>A considered degree-planning studio for the UUM School of Economics, Finance & Banking.</p>
+            </div>
+          </div>
+          <div>
+            <strong>Planner</strong>
+            <a href="index.html">Overview</a>
+            <a href="planner.html">Semester Planner</a>
+            <a href="analytics.html">CGPA Simulation</a>
+          </div>
+          <div>
+            <strong>Academic</strong>
+            <a href="audit.html">Graduation Checklist</a>
+            <a href="planner.html">Programme Setup</a>
+            <a href="help.html">Help & Support</a>
+          </div>
+          <div>
+            <strong>About</strong>
+            <a href="help.html">The Project</a>
+            <a href="help.html">Help & Support</a>
+          </div>
+          <div class="footer-bottom">
+            <span>&copy; Universiti Utara Malaysia - SEFB - 2026</span>
+            <span>Self-contained - Offline-ready</span>
+          </div>
+        </footer>
       </div>
     </main>
   </div>
   <script src="assets/js/sefb-data.js"></script>
-  <script src="assets/js/app.js?v=20260603c"></script>
+  <script src="assets/js/app.js?v=20260604c"></script>
 </body>
 </html>
 

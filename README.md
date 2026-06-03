@@ -23,7 +23,7 @@ https://YOUR-USERNAME.github.io/sefb-degree-planner/
 - `index.html` - academic overview
 - `planner.html` - semester planning
 - `audit.html` - graduation checklist and alerts
-- `analytics.html` - GPA and credit progress
+- `analytics.html` - CGPA simulation and credit progress
 - `courses.html` - searchable course list
 - `profile.html` - storage and plan settings
 - `help.html` - student usage guide
