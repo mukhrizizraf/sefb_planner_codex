@@ -7,13 +7,28 @@
   const FAIL_GRADES = new Set(["C-", "D+", "D", "F"]);
   const LOCK_ICON = "&#128274;";
   const SESSION_OPTIONS = ["A241", "A242", "A251", "A252", "A261", "A262", "A271", "A272", "A281", "A282"];
+  const ENGLISH_PATHWAY_REQ = { L1: 9, L2: 6, L3: 6, EX: 0 };
   const PATHWAY_COURSES = {
     L1: new Set(["MPB1013", "MPB2013", "MPB3013"]),
     L2: new Set(["MPB2013", "MPB3013"]),
     L3: new Set(["MPB3013", "SBLEK3023", "SBLEK3033", "SBLEK3043", "SBLEK3053"]),
     EX: new Set([])
   };
-  const LANG_FAMILY_DIGIT = { MAN: "5", ARA: "2", JPN: "3", FRA: "4", KOR: "6" };
+  const LANG_FAMILY_CODES = {
+    MAN: ["SBLFK1053", "SBLFK2053", "SBLFK3053"],
+    ARA: ["SBLFK1023", "SBLFK2023", "SBLFK3023"],
+    JPN: ["SBLFK1033", "SBLFK2033", "SBLFK3033"],
+    FRA: ["SBLFK1043", "SBLFK2043", "SBLFK3043"],
+    KOR: ["SBLFK1063", "SBLFK2063", "SBLFK3063"],
+    OTH: ["FOREIGN1013", "FOREIGN2013", "FOREIGN3013"]
+  };
+  const LEGACY_LANGUAGE_CODES = {
+    MAND1013: "SBLFK1053", MAND2013: "SBLFK2053", MAND3013: "SBLFK3053",
+    ARAB1013: "SBLFK1023", ARAB2013: "SBLFK2023", ARAB3013: "SBLFK3023",
+    JAPAN1013: "SBLFK1033", JAPAN2013: "SBLFK2033", JAPAN3013: "SBLFK3033",
+    FRENCH1013: "SBLFK1043", FRENCH2013: "SBLFK2043", FRENCH3013: "SBLFK3043",
+    KOREAN1013: "SBLFK1063", KOREAN2013: "SBLFK2063", KOREAN3013: "SBLFK3063"
+  };
   const FIELD_RECOMMENDED_SLOTS = {
     BECONS: {
       BM: {
@@ -30,14 +45,14 @@
       },
       HRM: {
         3: ["BPMHK2013"],
-        4: ["BPMHK3023", "BPMHK3033"],
-        5: ["BPMHK3053"],
+        4: ["BPMHK3023"],
+        5: ["BPMHK3053", "BPMHK3033"],
         6: ["BPMHK3063", "BPMHK3083"]
       },
       MKT: {
         3: ["BPMMK1013"],
-        4: ["BPMMK2023", "BPMMK3023"],
-        5: ["BPMMK3083"],
+        4: ["BPMMK2023"],
+        5: ["BPMMK3083", "BPMMK3023"],
         6: ["BPMMK3313", "BPMMK3333"]
       },
       MUA: {
@@ -52,6 +67,13 @@
         5: ["GMGAK2053"],
         6: ["GMGFK2023", "GMGMK3023"]
       }
+    }
+  };
+  const FIELD_RECOMMENDED_MOVES = {
+    BECONS: {
+      FIN: [{ code: "BEEEK3073", from: 5, to: 3 }],
+      HRM: [{ code: "BEEEK3073", from: 5, to: 3 }],
+      MKT: [{ code: "BEEEK3073", from: 5, to: 3 }]
     }
   };
   const PROGRAMS = window.SEFB.PROGRAMS;
@@ -78,6 +100,57 @@
     return PROGRAMS[state.programId] || PROGRAMS.BFIN;
   }
 
+  function programDisplayName(p) {
+    return p.nameEn ? `${p.nameEn} [${p.short}]` : p.short;
+  }
+
+  function hasEnglishPathways(p = currentProgram()) {
+    return p.courses.some((course) => course.cat === "B" && course.pathway);
+  }
+
+  function pathwayAllowedCourses() {
+    return PATHWAY_COURSES[state.pathId] || new Set();
+  }
+
+  function isCourseAllowedForPathway(course) {
+    if (!course || course.cat !== "B" || !course.pathway) return true;
+    if (state.pathId === "EX") return false;
+    if (course.pathway === "ESP") return state.pathId === "L3";
+    return course.pathway.includes(state.pathId);
+  }
+
+  function effectiveComponents(p = currentProgram()) {
+    return p.components.map((component) => {
+      if (component.l === "B" && hasEnglishPathways(p)) {
+        return { ...component, req: ENGLISH_PATHWAY_REQ[state.pathId] ?? component.req };
+      }
+      return component;
+    });
+  }
+
+  function effectiveTotalCredits(p = currentProgram()) {
+    if (!hasEnglishPathways(p)) return p.total;
+    const baseEnglish = p.components.find((component) => component.l === "B")?.req || 0;
+    const selectedEnglish = ENGLISH_PATHWAY_REQ[state.pathId] ?? baseEnglish;
+    return p.total - baseEnglish + selectedEnglish;
+  }
+
+  function defaultEspCourseCode(p = currentProgram()) {
+    const esp = p.courses.find((course) => course.cat === "B" && course.pathway === "ESP");
+    return esp ? esp.code : "";
+  }
+
+  function pathwayRecommendedSlots(p = currentProgram()) {
+    const esp = defaultEspCourseCode(p);
+    const slots = {
+      L1: { 1: ["MPB1013"], 2: ["MPB2013"], 3: ["MPB3013"] },
+      L2: { 1: ["MPB2013"], 2: ["MPB3013"] },
+      L3: { 1: ["MPB3013"], 2: esp ? [esp] : [] },
+      EX: {}
+    };
+    return slots[state.pathId] || slots.L2;
+  }
+
   function totalSems() {
     return currentProgram().semCount + (state.extraSems || 0);
   }
@@ -98,6 +171,9 @@
     if (!state.langId) state.langId = "MAN";
     if (state.langMode === "OTH" && !["ARA", "JPN", "FRA", "KOR", "OTH"].includes(state.langId)) state.langId = "ARA";
     if (state.langMode === "MAN") state.langId = "MAN";
+    Object.keys(state.plan).forEach((sem) => {
+      state.plan[sem] = (state.plan[sem] || []).map((item) => LEGACY_LANGUAGE_CODES[item.code] ? { ...item, code: LEGACY_LANGUAGE_CODES[item.code] } : item);
+    });
     if (p.tracks && p.tracks.length && !state.trackId) state.trackId = p.tracks[0].id;
     if (!p.tracks || !p.tracks.length) state.trackId = "";
     if (p.fFields && p.fFields.length && !state.fieldId) state.fieldId = p.fFields[0].id;
@@ -259,7 +335,7 @@
     if (!c) return { ok: true, missing: [] };
     const missing = [];
     const requireGrades = Boolean(options.requireGrades);
-    const pathwayAllowed = PATHWAY_COURSES[state.pathId] || new Set();
+    const pathwayAllowed = pathwayAllowedCourses();
     (c.pre || []).forEach((pre) => {
       const preCourse = getCourse(pre);
       if (preCourse && preCourse.cat === "B" && preCourse.pathway && !pathwayAllowed.has(pre)) return;
@@ -274,7 +350,7 @@
     });
     const priorCredits = creditsBefore(sem, { passedOnly: requireGrades });
     if (c.minCr && priorCredits < c.minCr) missing.push(`${c.minCr}cr minimum`);
-    if (c.all && priorCredits < currentProgram().total - c.cr) missing.push("finish other courses first");
+    if (c.all && priorCredits < effectiveTotalCredits() - c.cr) missing.push("finish other courses first");
     if (c.offer === "odd" && sem % 2 === 0) missing.push("odd semesters only");
     if (c.offer === "even" && sem % 2 === 1) missing.push("even semesters only");
     return { ok: missing.length === 0, missing };
@@ -283,13 +359,13 @@
   function componentProgress(options = {}) {
     const p = currentProgram();
     const byCat = {};
-    p.components.forEach((comp) => {
+    effectiveComponents(p).forEach((comp) => {
       byCat[comp.l] = { ...comp, done: 0 };
     });
     const items = options.completedOnly ? plannedItems().filter(hasPassingGrade) : plannedItems();
     items.forEach((item) => {
       const c = getCourse(item.code);
-      if (c && byCat[c.cat]) byCat[c.cat].done += c.cr;
+      if (c && byCat[c.cat] && isCourseAllowedForPathway(c)) byCat[c.cat].done += c.cr;
     });
     return byCat;
   }
@@ -301,6 +377,7 @@
     return currentProgram().courses.filter((course) => {
       const placed = placement[course.code];
       if (placed && !(placed.grade && FAIL_GRADES.has(placed.grade))) return false;
+      if (!isCourseAllowedForPathway(course)) return false;
       if (course.cat === "D" && course.lang && course.lang !== state.langId) return false;
       if (course.cat === "D" && course.track && committedTrack && course.track !== committedTrack) return false;
       if (course.cat === "F" && course.field && committedField && course.field !== committedField) return false;
@@ -313,6 +390,7 @@
     const committedTrack = committedTrackId();
     const committedField = committedFieldId() || state.fieldId;
     return currentProgram().courses.filter((course) => {
+      if (!isCourseAllowedForPathway(course)) return false;
       return !(course.cat === "D" && course.lang && course.lang !== state.langId);
     }).map((course) => {
       const placed = placement[course.code] || null;
@@ -363,51 +441,21 @@
   function substituteLangCourses(fromLang, toLang) {
     if (!fromLang || !toLang || fromLang === toLang) return;
     const p = currentProgram();
-    if (fromLang === "OTH") {
-      const toD = LANG_FAMILY_DIGIT[toLang];
-      if (!toD) return;
-      const re = /^FOREIGN([123])013$/;
-      Object.keys(state.plan).forEach((sem) => {
-        state.plan[sem] = (state.plan[sem] || []).map((item) => {
-          const match = item.code.match(re);
-          if (!match) return item;
-          const newCode = `SBLFK${match[1]}0${toD}3`;
-          return p.courses.find((course) => course.code === newCode) ? { ...item, code: newCode } : item;
-        });
-      });
-      return;
-    }
-    if (toLang === "OTH") {
-      const fromD = LANG_FAMILY_DIGIT[fromLang];
-      if (!fromD) return;
-      const re = new RegExp(`^SBLFK([123])0${fromD}3$`);
-      Object.keys(state.plan).forEach((sem) => {
-        state.plan[sem] = (state.plan[sem] || []).map((item) => {
-          const match = item.code.match(re);
-          if (!match) return item;
-          const newCode = `FOREIGN${match[1]}013`;
-          return p.courses.find((course) => course.code === newCode) ? { ...item, code: newCode } : item;
-        });
-      });
-      return;
-    }
-    const fromD = LANG_FAMILY_DIGIT[fromLang];
-    const toD = LANG_FAMILY_DIGIT[toLang];
-    if (!fromD || !toD) return;
-    const re = new RegExp(`^SBLFK([123])0${fromD}3$`);
+    const fromCodes = LANG_FAMILY_CODES[fromLang];
+    const toCodes = LANG_FAMILY_CODES[toLang];
+    if (!fromCodes || !toCodes) return;
     Object.keys(state.plan).forEach((sem) => {
       state.plan[sem] = (state.plan[sem] || []).map((item) => {
-        const match = item.code.match(re);
-        if (!match) return item;
-        const newCode = `SBLFK${match[1]}0${toD}3`;
+        const index = fromCodes.indexOf(item.code);
+        if (index === -1) return item;
+        const newCode = toCodes[index];
         return p.courses.find((course) => course.code === newCode) ? { ...item, code: newCode } : item;
       });
     });
   }
 
   function programOptions() {
-    const label = (p) => `${p.nameEn || p.short} (${p.short.replace(/[()]/g, "")})`;
-    return Object.values(PROGRAMS).map((p) => `<option value="${p.id}" ${p.id === state.programId ? "selected" : ""}>${label(p)}</option>`).join("");
+    return Object.values(PROGRAMS).map((p) => `<option value="${p.id}" ${p.id === state.programId ? "selected" : ""}>${programDisplayName(p)}</option>`).join("");
   }
 
   function renderChrome(active) {
@@ -544,14 +592,16 @@
     const p = currentProgram();
     const g = computeGPA();
     const total = plannedCredits();
-    const standing = g.allPlannedGraded ? classifyCgpa(g.cgpa) : null;
+    const hasCgpa = g.gradedCredits > 0;
+    const standing = hasCgpa ? classifyCgpa(g.cgpa) : null;
     const heroProgram = $("heroProgram");
-    if (heroProgram) heroProgram.textContent = p.nameEn || p.short;
-    $("heroMeta").textContent = `${p.total} credits / ${p.semCount} semesters / ${p.courses.length} course entries`;
-    $("statCredits").textContent = `${total}/${p.total}`;
-    $("statCgpa").textContent = g.allPlannedGraded ? g.cgpa.toFixed(2) : "--";
+    if (heroProgram) heroProgram.textContent = programDisplayName(p);
+    const requiredTotal = effectiveTotalCredits(p);
+    $("heroMeta").textContent = `${requiredTotal} credits / ${p.semCount} semesters / ${p.courses.length} course entries`;
+    $("statCredits").textContent = `${total}/${requiredTotal}`;
+    $("statCgpa").textContent = hasCgpa ? g.cgpa.toFixed(2) : "--";
     $("statCourses").textContent = plannedItems().length;
-    $("statStatus").textContent = standing ? standing.label : g.gradedCourses ? `${g.gradedCourses}/${g.plannedCourses} graded` : "Awaiting grades";
+    $("statStatus").textContent = standing ? standing.label : "Awaiting grades";
     renderCgpaOverview(g, total, standing);
     renderComponents("componentGrid");
     renderSemesterBars("semesterBars");
@@ -560,17 +610,22 @@
   function renderCgpaOverview(g, total, standing) {
     const gauge = $("cgpaGauge");
     if (!gauge) return;
+    const hasCgpa = g.gradedCredits > 0;
     $("cgpaOverview").dataset.tone = standing ? standing.tone : "empty";
-    const value = g.allPlannedGraded ? g.cgpa : 0;
+    const value = hasCgpa ? g.cgpa : 0;
     const pct = Math.max(0, Math.min(100, (value / 4) * 100));
     gauge.style.setProperty("--cgpa", `${pct}%`);
     gauge.dataset.tone = standing ? standing.tone : "empty";
-    $("cgpaGaugeValue").textContent = g.allPlannedGraded ? g.cgpa.toFixed(2) : "--";
+    $("cgpaGaugeValue").textContent = hasCgpa ? g.cgpa.toFixed(2) : "--";
     $("cgpaGaugeStanding").textContent = standing ? standing.label : "Awaiting grades";
-    $("cgpaGaugeNote").textContent = standing ? "" : `${g.gradedCourses}/${g.plannedCourses} planned courses graded.`;
+    $("cgpaGaugeNote").textContent = hasCgpa
+      ? `${g.gradedCourses}/${g.plannedCourses} planned courses graded. Final standing may change.`
+      : `${g.gradedCourses}/${g.plannedCourses} planned courses graded.`;
     $("cgpaStandingTitle").textContent = standing ? standing.label : "Awaiting grades";
-    $("cgpaStandingText").textContent = standing ? "Classification follows the SEFB CGPA bands." : "Your standing will appear after every planned course has a grade.";
-    $("overviewProgramName").textContent = currentProgram().nameEn || currentProgram().short;
+    $("cgpaStandingText").textContent = hasCgpa
+      ? "Based on grades entered so far. Graduation eligibility still requires every planned course to be graded."
+      : "Enter at least one grade to calculate CGPA.";
+    $("overviewProgramName").textContent = programDisplayName(currentProgram());
     $("overviewCreditsPlanned").textContent = total;
     $("overviewGradedCourses").textContent = g.gradedCourses;
     $("overviewGradedCredits").textContent = g.gradedCredits;
@@ -580,7 +635,7 @@
     const holder = $(id);
     if (!holder) return;
     holder.innerHTML = Object.values(componentProgress()).map((comp) => {
-      const pct = Math.min(100, Math.round((comp.done / comp.req) * 100));
+      const pct = comp.req ? Math.min(100, Math.round((comp.done / comp.req) * 100)) : 100;
       return `<div class="panel">
         <div class="eyebrow">${comp.l}. ${comp.ms}</div>
         <h3>${comp.en}</h3>
@@ -602,6 +657,7 @@
 
   function courseListCourseDetail(course, committedTrack, committedField) {
     const p = currentProgram();
+    if (course.ph) return "Planner placeholder; confirm actual registration code.";
     if (course.track) {
       const track = p.tracks?.find((item) => item.id === course.track);
       const selected = committedTrack && committedTrack !== course.track ? " - locked by selected specialisation" : "";
@@ -644,7 +700,7 @@
   }
 
   function renderPlanner() {
-    $("plannerTitle").textContent = currentProgram().nameEn || currentProgram().short;
+    $("plannerTitle").textContent = programDisplayName(currentProgram());
     const p = currentProgram();
     const committedTrack = committedTrackId();
     const committedField = committedFieldId() || state.fieldId;
@@ -654,15 +710,16 @@
       notices.push(`${dComponent?.en || "Specialization"} committed: ${p.tracks.find((track) => track.id === committedTrack)?.en || committedTrack}`);
     }
     if (committedField && p.fFields) notices.push(`Field elective committed: ${p.fFields.find((field) => field.id === committedField)?.en || committedField}`);
+    if (p.courses.some((course) => course.ph)) notices.push("Placeholder codes shown for simulation; confirm actual registration codes.");
     const legendHolder = $("plannerLegend");
     if (legendHolder) {
-      const categoryLegend = p.components.map((component) => `
+      const categoryLegend = effectiveComponents(p).map((component) => `
         <span class="legend-chip cat-${component.l}">
           <strong>Category ${component.l}</strong>
           <span>${component.en}</span>
         </span>
       `).join("");
-      const commitment = notices.length ? `<div class="commitment-note">${notices.map((msg) => `${msg} / other groups locked`).join(" · ")}</div>` : "";
+      const commitment = notices.length ? `<div class="commitment-note">${notices.join(" / ")}</div>` : "";
       legendHolder.innerHTML = `<div class="legend-chips">${categoryLegend}</div>${commitment}`;
     }
     const holder = $("semesters");
@@ -682,7 +739,7 @@
           <div class="course-code">${c.code}</div>
           <div class="course-main">
             <div class="course-title">${c.en}</div>
-            <div class="course-sub">${c.ms || ""} · ${categoryLabel(c.cat)}</div>
+            <div class="course-sub">${c.ms || ""} · ${categoryLabel(c.cat)}${c.ph ? " · Placeholder" : ""}</div>
             ${status.ok ? "" : `<div class="course-lock">${LOCK_ICON} ${status.missing.join(", ")}</div>`}
           </div>
           <div class="course-credit">${c.cr} CR</div>
@@ -843,7 +900,7 @@
     addableCourseRows(sem).forEach((course) => {
       (byCat[course.cat] = byCat[course.cat] || []).push(course);
     });
-    return p.components.map((component) => {
+    return effectiveComponents(p).map((component) => {
       const list = (byCat[component.l] || []).sort((a, b) => a.code.localeCompare(b.code));
       if (!list.length) return "";
       if (component.l === "D" && p.tracks && p.tracks.length && list.some((course) => course.track)) {
@@ -910,10 +967,29 @@
         toast("Choose a field elective first");
         return;
       }
-      confirmDialog(`Replace your current plan with the recommended plan for ${field.en}?`, () => applyRecommendedPlan(applyFieldElectiveChoice(rec, state.fieldId)));
+      confirmDialog(`Replace your current plan with the recommended plan for ${field.en}?`, () => applyRecommendedPlan(rebalanceRecommendedPlan(applyEnglishPathwayChoice(applyFieldElectiveChoice(rec, state.fieldId)))));
       return;
     }
-    confirmDialog("Replace your current plan with the official recommended plan?", () => applyRecommendedPlan(rec));
+    confirmDialog("Replace your current plan with the official recommended plan?", () => applyRecommendedPlan(rebalanceRecommendedPlan(applyEnglishPathwayChoice(rec))));
+  }
+
+  function applyEnglishPathwayChoice(rec) {
+    const p = currentProgram();
+    if (!hasEnglishPathways(p)) return rec;
+    const out = {};
+    Object.entries(rec).forEach(([sem, codes]) => {
+      out[sem] = codes.filter((code) => {
+        const course = getCourse(code);
+        return !(course && course.cat === "B" && course.pathway);
+      });
+    });
+    Object.entries(pathwayRecommendedSlots(p)).forEach(([sem, codes]) => {
+      out[sem] = out[sem] || [];
+      codes.filter(Boolean).forEach((code) => {
+        if (getCourse(code) && !out[sem].includes(code)) out[sem].push(code);
+      });
+    });
+    return out;
   }
 
   function applyFieldElectiveChoice(rec, fieldId) {
@@ -929,10 +1005,69 @@
       });
       out[sem] = base.concat(replacement);
     });
+    (FIELD_RECOMMENDED_MOVES[p.id]?.[fieldId] || []).forEach((move) => {
+      const from = String(move.from);
+      const to = String(move.to);
+      out[from] = (out[from] || []).filter((code) => code !== move.code);
+      out[to] = out[to] || [];
+      if (!out[to].includes(move.code)) out[to].push(move.code);
+    });
     return out;
   }
 
+  function planSemesterCredits(plan, sem) {
+    return (plan[sem] || []).reduce((sum, code) => {
+      const course = getCourse(code);
+      return sum + (course ? course.cr : 0);
+    }, 0);
+  }
+
+  function hasLaterDependent(plan, code, sem) {
+    return Object.entries(plan).some(([targetSem, codes]) => Number(targetSem) > sem && codes.some((candidate) => {
+      const course = getCourse(candidate);
+      return course && (course.pre || []).includes(code);
+    }));
+  }
+
+  function moveIndustrialOutOfSemester(plan, sem) {
+    const industrial = (plan[sem] || []).filter((code) => getCourse(code)?.all);
+    if (!industrial.length) return;
+    plan[sem] = plan[sem].filter((code) => !industrial.includes(code));
+    const next = String(Number(sem) + 1);
+    plan[next] = (plan[next] || []).concat(industrial);
+  }
+
+  function rebalanceRecommendedPlan(rec) {
+    const plan = {};
+    Object.entries(rec).forEach(([sem, codes]) => {
+      plan[sem] = [...codes];
+    });
+    for (let guard = 0; guard < 40; guard++) {
+      const overloadedSem = Object.keys(plan).map(Number).sort((a, b) => a - b).find((sem) => planSemesterCredits(plan, sem) > MAX_CR);
+      if (!overloadedSem) break;
+      const movable = [...(plan[overloadedSem] || [])].reverse().find((code) => {
+        const course = getCourse(code);
+        return course && course.cat !== "B" && !course.all && !hasLaterDependent(plan, code, overloadedSem);
+      });
+      if (!movable) break;
+      const movableCredits = getCourse(movable).cr;
+      let targetSem = Object.keys(plan).map(Number).sort((a, b) => a - b).find((sem) => sem > overloadedSem && planSemesterCredits(plan, sem) + movableCredits <= MAX_CR);
+      if (!targetSem) targetSem = Math.max(...Object.keys(plan).map(Number)) + 1;
+      moveIndustrialOutOfSemester(plan, String(targetSem));
+      while (planSemesterCredits(plan, targetSem) + movableCredits > MAX_CR) {
+        targetSem += 1;
+        moveIndustrialOutOfSemester(plan, String(targetSem));
+      }
+      plan[overloadedSem] = plan[overloadedSem].filter((code) => code !== movable);
+      plan[String(targetSem)] = plan[String(targetSem)] || [];
+      plan[String(targetSem)].push(movable);
+    }
+    return plan;
+  }
+
   function applyRecommendedPlan(rec) {
+    const maxSem = Math.max(...Object.keys(rec).map(Number));
+    state.extraSems = Math.max(0, maxSem - currentProgram().semCount);
     state.plan = emptyPlan();
     Object.entries(rec).forEach(([sem, codes]) => {
       state.plan[sem] = codes.map((code) => ({ code, grade: "" }));
@@ -972,14 +1107,15 @@
       }
     ];
     Object.values(passedByCat).forEach((comp) => items.push({ ok: comp.done >= comp.req, label: `${comp.l}. ${comp.en}`, value: `${comp.done}/${comp.req} cr` }));
-    items.push({ ok: total >= p.total, label: "Completed credits", value: `${total}/${p.total}` });
+    const requiredTotal = effectiveTotalCredits(p);
+    items.push({ ok: total >= requiredTotal, label: "Completed credits", value: `${total}/${requiredTotal}` });
     items.push({ ok: g.allPlannedGraded && g.cgpa >= 2, label: "Minimum CGPA 2.00", value: g.allPlannedGraded ? g.cgpa.toFixed(2) : `${g.gradedCourses}/${g.plannedCourses} courses graded` });
     const remaining = items.filter((item) => !item.ok).length;
     const pendingPlaced = planned.filter((item) => !hasPassingGrade(item)).reduce((sum, item) => sum + courseCredits(item), 0);
     const completion = items.length ? Math.round((items.filter((item) => item.ok).length / items.length) * 100) : 0;
     const eligible = items.every((item) => item.ok);
     const degree = $("auditDegree");
-    if (degree) degree.textContent = p.nameEn || p.short;
+    if (degree) degree.textContent = programDisplayName(p);
     $("auditSummary").innerHTML = `
       <div class="eyebrow">Final status</div>
       <h2>${eligible ? "Eligible To Graduate" : "Not Yet Eligible"}</h2>
@@ -990,7 +1126,7 @@
     const rows = Object.values(passedByCat).map((comp) => {
       const plannedComp = plannedByCat[comp.l] || comp;
       const pending = Math.max(0, plannedComp.done - comp.done);
-      const pct = comp.req ? Math.min(100, Math.round((comp.done / comp.req) * 100)) : 0;
+      const pct = comp.req ? Math.min(100, Math.round((comp.done / comp.req) * 100)) : 100;
       const met = comp.done >= comp.req;
       const note = pending ? `${pending} cr placed, not yet passed` : comp.ms;
       return { label: `${comp.l}. ${comp.en}`, detail: note, value: `${comp.done} / ${comp.req} cr passed`, pct, met, status: met ? "Met" : pending ? "Grading pending" : "Pending" };
@@ -998,10 +1134,10 @@
     rows.push({
       label: "Total Credits",
       detail: `${placedTotal} cr placed in planner`,
-      value: `${total} / ${p.total} cr passed`,
-      pct: p.total ? Math.min(100, Math.round((total / p.total) * 100)) : 0,
-      met: total >= p.total,
-      status: total >= p.total ? "Met" : "Grading pending"
+      value: `${total} / ${requiredTotal} cr passed`,
+      pct: requiredTotal ? Math.min(100, Math.round((total / requiredTotal) * 100)) : 0,
+      met: total >= requiredTotal,
+      status: total >= requiredTotal ? "Met" : "Grading pending"
     });
     rows.push({
       label: "Minimum CGPA 2.00",
@@ -1037,8 +1173,9 @@
     }).filter((row) => row.credits > 0 && !(p.shortSems || []).includes(row.sem));
     const balancedLoads = regularLoads.length > 0 && regularLoads.every((row) => row.credits >= MIN_CR && row.credits <= MAX_CR);
     const deansTerm = g.per.some((row) => row.allGraded && row.gpa !== null && row.gpa >= DEANS_LIST);
-    const halfwayCredits = Math.ceil(p.total / 2);
-    const finalApproachCredits = Math.ceil(p.total * 0.85);
+    const requiredTotal = effectiveTotalCredits(p);
+    const halfwayCredits = Math.ceil(requiredTotal / 2);
+    const finalApproachCredits = Math.ceil(requiredTotal * 0.85);
     const tiles = [
       {
         label: "First year cleared",
@@ -1047,12 +1184,12 @@
       },
       {
         label: "Halfway point",
-        detail: `${total} / ${p.total} credits passed. Target: ${halfwayCredits} credits.`,
+        detail: `${total} / ${requiredTotal} credits passed. Target: ${halfwayCredits} credits.`,
         earned: total >= halfwayCredits
       },
       {
         label: "Final approach",
-        detail: `${total} / ${p.total} credits passed. Target: ${finalApproachCredits} credits.`,
+        detail: `${total} / ${requiredTotal} credits passed. Target: ${finalApproachCredits} credits.`,
         earned: total >= finalApproachCredits
       },
       {
@@ -1108,6 +1245,17 @@
         issues.push({ kind: "grades", tag: "Grades", mark: "A+", title: `Semester ${sem}: add missing grades`, detail: `${ungraded.length} course(s) still blank. No need to panic, just fill them after results.` });
       }
     }
+    const selectedTrack = committedTrackId() || state.trackId;
+    const decisionMathSelected = (p.id === "BBANK" && selectedTrack === "MP") || (p.id === "BRMI" && selectedTrack === "DM");
+    if (decisionMathSelected && plannedCredits() > effectiveTotalCredits(p)) {
+      issues.push({
+        kind: "load",
+        tag: "Credit note",
+        mark: "+1",
+        title: "Decision Mathematics adds one extra credit",
+        detail: "Calculus I is 4 credits, so this route can finish at 121 credits instead of 120. This is a note, not a blocker."
+      });
+    }
     const count = $("alertCount");
     if (count) count.textContent = issues.length ? `${issues.length} item${issues.length === 1 ? "" : "s"}` : "Clear";
     holder.innerHTML = issues.length ? `<div class="action-board">${issues.map((issue) => `
@@ -1124,8 +1272,12 @@
 
   function renderAnalytics() {
     const g = computeGPA();
-    $("analyticsCgpa").textContent = g.allPlannedGraded ? g.cgpa.toFixed(2) : "--";
-    $("analyticsStanding").textContent = !g.gradedCourses ? "No graded credits" : !g.allPlannedGraded ? `${g.gradedCourses}/${g.plannedCourses} courses graded` : classifyCgpa(g.cgpa).label;
+    $("analyticsCgpa").textContent = g.gradedCredits ? g.cgpa.toFixed(2) : "--";
+    $("analyticsStanding").textContent = !g.gradedCredits
+      ? "No graded credits"
+      : g.allPlannedGraded
+        ? classifyCgpa(g.cgpa).label
+        : `${classifyCgpa(g.cgpa).label} so far (${g.gradedCourses}/${g.plannedCourses} courses graded)`;
     $("gpaRows").innerHTML = g.per.map((row) => `<div class="bar-row">
       <span>Sem ${row.sem}</span>
       <div class="bar"><span style="--w:${row.allGraded ? Math.round(((row.gpa || 0) / 4) * 100) : 0}%"></span></div>
@@ -1161,7 +1313,7 @@
   function renderProfile() {
     const p = currentProgram();
     $("profileProgram").textContent = p.fullName;
-    $("profileMeta").textContent = `${p.total} credits / ${p.semCount} standard semesters`;
+    $("profileMeta").textContent = `${effectiveTotalCredits(p)} credits / ${p.semCount} standard semesters`;
     $("profileStored").textContent = localStorage.getItem(STORAGE_KEY) ? "Saved in this browser" : "No saved v3 plan yet";
     $("resetPlan").onclick = () => {
       confirmDialog("Reset your current plan? This cannot be undone.", () => {

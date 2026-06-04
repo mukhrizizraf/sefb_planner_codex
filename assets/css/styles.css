@@ -143,6 +143,56 @@ button, input, select { font: inherit; }
   justify-content: flex-end;
 }
 
+body[data-page="planner"] .topbar {
+  display: grid;
+  grid-template-columns: minmax(320px, 460px) minmax(0, 1fr);
+  align-items: start;
+  gap: 30px;
+}
+
+body[data-page="planner"] .topbar > div:first-child {
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-top: 3px solid color-mix(in srgb, var(--brown) 70%, var(--amber));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.58), rgba(255,255,255,.08)),
+    color-mix(in srgb, var(--bone) 72%, var(--surface));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+}
+
+body[data-page="planner"] #plannerTitle {
+  margin-top: 8px;
+  font-size: clamp(27px, 2.1vw, 32px);
+  font-weight: 400;
+  line-height: 1.08;
+  max-width: 420px;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+body[data-page="planner"] .program-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+body[data-page="planner"] .program-controls > span {
+  display: contents;
+}
+
+body[data-page="planner"] .program-controls [data-program-select] {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+body[data-page="planner"] .program-controls .button,
+body[data-page="planner"] .program-controls .select {
+  min-height: 54px;
+}
+
 .select, .input {
   width: 100%;
   max-width: 100%;
@@ -565,9 +615,20 @@ h3 { font-size: 23px; line-height: 1.15; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 16px;
-  background: var(--charcoal);
+  padding: 11px 18px;
+  border: 1px solid color-mix(in srgb, var(--brown) 34%, var(--line));
+  border-top: 3px solid color-mix(in srgb, var(--amber) 80%, var(--brown));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 38%),
+    linear-gradient(135deg, #2b2119 0%, #1f1914 55%, #15120f 100%);
   color: var(--cream);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.semester-head > strong {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.01em;
 }
 
 .semester-meta {
@@ -581,15 +642,20 @@ h3 { font-size: 23px; line-height: 1.15; }
 .dean-button {
   position: relative;
   overflow: hidden;
-  min-height: 44px;
-  border-color: #f0b15f;
-  background: linear-gradient(135deg, #f0b15f 0%, #b87333 46%, #7e461f 100%);
+  min-height: 38px;
+  border: 1px solid color-mix(in srgb, var(--amber) 64%, var(--brown));
+  border-radius: 5px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,0) 42%),
+    linear-gradient(135deg, #c99055 0%, #9a5d2d 58%, #6f3f22 100%);
   color: var(--cream);
-  box-shadow: 0 8px 18px rgba(126,70,31,.22);
-  padding: 0 20px;
-  font-size: 16px;
-  font-weight: 900;
-  letter-spacing: .02em;
+  box-shadow:
+    0 2px 0 #5c341d,
+    0 8px 16px rgba(83,48,26,.18);
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: .01em;
   text-transform: none;
 }
 
@@ -607,19 +673,23 @@ h3 { font-size: 23px; line-height: 1.15; }
 }
 
 .dean-button:hover {
-  border-color: #ffd59b;
-  background: linear-gradient(135deg, #ffc36f 0%, #c9843b 46%, #8b4d23 100%);
+  border-color: color-mix(in srgb, var(--amber) 86%, var(--cream));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 42%),
+    linear-gradient(135deg, #d29a5b 0%, #a56632 58%, #784624 100%);
   color: var(--cream);
 }
 
 .session-select {
   width: 112px;
-  min-height: 44px;
-  border-color: rgba(248,242,222,.3);
-  background: rgba(248,242,222,.08);
+  min-height: 38px;
+  border-color: rgba(248,242,222,.26);
+  border-radius: 5px;
+  background: rgba(248,242,222,.07);
   color: var(--cream);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
   padding: 0 12px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -631,7 +701,7 @@ h3 { font-size: 23px; line-height: 1.15; }
 .semester-meta > span {
   min-width: 82px;
   color: var(--cream);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   line-height: 1;
 }
@@ -654,7 +724,7 @@ h3 { font-size: 23px; line-height: 1.15; }
 .term-gpa strong {
   color: var(--cream);
   font-family: "Libre Caslon Text", Georgia, serif;
-  font-size: 26px;
+  font-size: 23px;
   font-weight: 400;
   line-height: 1;
 }
@@ -759,30 +829,50 @@ h3 { font-size: 23px; line-height: 1.15; }
 .legend-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 13px;
 }
 
 .legend-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 34px;
-  padding: 6px 11px;
-  border: 1px solid color-mix(in srgb, var(--cat) 34%, var(--surface));
-  border-left: 8px solid var(--cat);
-  background: var(--cat-bg);
+  gap: 10px;
+  min-height: 42px;
+  padding: 9px 15px 9px 18px;
+  border: 1px solid color-mix(in srgb, var(--cat) 32%, var(--line));
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,.16) 48%, rgba(42,31,23,.05)),
+    var(--cat-bg);
   color: var(--ink);
+  box-shadow:
+    0 3px 0 color-mix(in srgb, var(--cat) 58%, #6f5139),
+    0 12px 22px rgba(50,35,24,.08);
+  transform: translateY(0);
+}
+
+.legend-chip::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cat) 76%, #fff), var(--cat));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.38);
 }
 
 .legend-chip strong {
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: .1em;
+  letter-spacing: .12em;
   color: color-mix(in srgb, var(--cat) 72%, var(--ink));
 }
 
 .legend-chip span {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 650;
   color: var(--ink);
 }
 

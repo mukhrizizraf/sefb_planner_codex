@@ -13,7 +13,7 @@ const GRADES = [
 ============================================================================ */
 const PROGRAMS = {};
 
-/* ─────────── BFIN — 122 cr, 8 semesters, 7 components ─────────── */
+/* ----------- BFIN — 122 cr, 8 semesters, 7 components ----------- */
 PROGRAMS.BFIN = {
   id:"BFIN", short:"BFin (Hons)",
   fullName:"SARJANA MUDA KEWANGAN DENGAN KEPUJIAN [BFIN (HONS)]",
@@ -126,7 +126,7 @@ PROGRAMS.BFIN = {
   }
 };
 
-/* ─────────── BBANK — 120 cr, 7 semesters (6+1 short), 7 components ─────────── */
+/* ----------- BBANK — 120 cr, 7 semesters (6+1 short), 7 components ----------- */
 PROGRAMS.BBANK = {
   id:"BBANK", short:"BBank (Hons)",
   fullName:"SARJANA MUDA PERBANKAN DENGAN KEPUJIAN [BBANK (HONS)]",
@@ -274,11 +274,11 @@ PROGRAMS.BBANK = {
   }
 };
 
-/* ─────────── BSc. Economics — 125 cr, 7 semesters, 8 components ─────────── */
+/* ----------- BSc. Economics — 125 cr, 7 semesters, 8 components ----------- */
 PROGRAMS.BECONS = {
   id:"BECONS", short:"BSc. Economics (Hons)",
   fullName:"SARJANA MUDA SAINS EKONOMI DENGAN KEPUJIAN [BSc. Economics (Hons)]",
-  nameEn:"Bachelor of Economics Science with Honours",
+  nameEn:"Bachelor of Science Economics with Honours",
   total:125, semCount:7,
   components:[
     {l:"A",ms:"Teras Universiti",en:"University Core",req:12},
@@ -443,7 +443,7 @@ PROGRAMS.BECONS = {
   }
 };
 
-/* ─────────── BRMI — 120 cr, 7 semesters, 7 components ─────────── */
+/* ----------- BRMI — 120 cr, 7 semesters, 7 components ----------- */
 PROGRAMS.BRMI = {
   id:"BRMI", short:"BRMI (Hons)",
   fullName:"SARJANA MUDA PENGURUSAN RISIKO DAN INSURANS DENGAN KEPUJIAN [BRMI (HONS)]",
@@ -561,7 +561,7 @@ PROGRAMS.BRMI = {
        Sem 4: core + FE2 + FE3 + Ko-Kur I = 19 cr
        Sem 5: core + FE4 + FE5 + Free Elec + Ko-Kur II = 19 cr
        Sem 6: core + PE4 + FE6 = 18 cr
-       Sem 7: Industrial Training = 6 cr  →  Total = 120 cr */
+       Sem 7: Industrial Training = 6 cr  ?  Total = 120 cr */
     "PK":{
       1:["BKAFK1023","BWRRK1013","BPMNK1013","SQQSK1013","MPU1042","MPU1052","MPB2013"],
       2:["BWFFK2033","GLULK2013","SQQSK2013","BEEBK1013","MPU1022","MPU1012","MPB3013"],
@@ -601,7 +601,7 @@ PROGRAMS.BRMI = {
   }
 };
 
-/* ─────────── BSc. Agribus. Mgmt. — 125 cr, 7 semesters, 6 components ─────────── */
+/* ----------- BSc. Agribus. Mgmt. — 125 cr, 7 semesters, 6 components ----------- */
 PROGRAMS.BAGRO = {
   id:"BAGRO", short:"BSc. Agribus. (Hons)",
   fullName:"SARJANA MUDA SAINS PENGURUSAN PERNIAGAANTANI DENGAN KEPUJIAN [BSc. Agribus. Mgmt. (Hons)]",
@@ -707,3 +707,6 @@ PROGRAMS.BAGRO = {
 window.SEFB = window.SEFB || {};
 window.SEFB.GRADES = GRADES;
 window.SEFB.PROGRAMS = PROGRAMS;
+
+
+
