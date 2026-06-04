@@ -14,6 +14,46 @@
     EX: new Set([])
   };
   const LANG_FAMILY_DIGIT = { MAN: "5", ARA: "2", JPN: "3", FRA: "4", KOR: "6" };
+  const FIELD_RECOMMENDED_SLOTS = {
+    BECONS: {
+      BM: {
+        3: ["BWBBK1013", "BWBBK2013"],
+        4: ["BWBBK3013"],
+        5: ["BWBBK3023"],
+        6: ["BWBBK3043", "BWBBK3063"]
+      },
+      FIN: {
+        3: ["BWFFK2033"],
+        4: ["BWFFK2043"],
+        5: ["BWFFK2053", "BWFFK3013"],
+        6: ["BWFFK3033", "BWFFK3073"]
+      },
+      HRM: {
+        3: ["BPMHK2013"],
+        4: ["BPMHK3023", "BPMHK3033"],
+        5: ["BPMHK3053"],
+        6: ["BPMHK3063", "BPMHK3083"]
+      },
+      MKT: {
+        3: ["BPMMK1013"],
+        4: ["BPMMK2023", "BPMMK3023"],
+        5: ["BPMMK3083"],
+        6: ["BPMMK3313", "BPMMK3333"]
+      },
+      MUA: {
+        3: ["BIMEK1013", "BIMCK2033"],
+        4: ["BIMCK2083"],
+        5: ["BIMCK1043"],
+        6: ["BIMCK3063", "BIMEK3023"]
+      },
+      PM: {
+        3: ["GMGAK2013", "GMGAK2023"],
+        4: ["GMGAK2033"],
+        5: ["GMGAK2053"],
+        6: ["GMGFK2023", "GMGMK3023"]
+      }
+    }
+  };
   const PROGRAMS = window.SEFB.PROGRAMS;
   const GRADES = window.SEFB.GRADES;
   const $ = (id) => document.getElementById(id);
@@ -21,7 +61,9 @@
   const defaultState = () => ({
     programId: "BFIN",
     trackId: "INV",
+    fieldId: "",
     pathId: "L2",
+    langMode: "MAN",
     langId: "MAN",
     theme: "architectural",
     plan: {},
@@ -51,9 +93,15 @@
     if (!state.plan || typeof state.plan !== "object") state.plan = {};
     if (!state.sessions || typeof state.sessions !== "object") state.sessions = {};
     if (!state.pathId) state.pathId = "L2";
+    if (!state.langMode) state.langMode = state.langId && state.langId !== "MAN" ? "OTH" : "MAN";
+    if (state.langMode !== "OTH") state.langMode = "MAN";
     if (!state.langId) state.langId = "MAN";
+    if (state.langMode === "OTH" && !["ARA", "JPN", "FRA", "KOR", "OTH"].includes(state.langId)) state.langId = "ARA";
+    if (state.langMode === "MAN") state.langId = "MAN";
     if (p.tracks && p.tracks.length && !state.trackId) state.trackId = p.tracks[0].id;
     if (!p.tracks || !p.tracks.length) state.trackId = "";
+    if (p.fFields && p.fFields.length && !state.fieldId) state.fieldId = p.fFields[0].id;
+    if (!p.fFields || !p.fFields.length) state.fieldId = "";
     for (let i = 1; i <= totalSems(); i++) {
       if (!Array.isArray(state.plan[i])) state.plan[i] = [];
       if (!state.sessions[i] || !SESSION_OPTIONS.includes(state.sessions[i])) {
@@ -116,8 +164,11 @@
     return plannedItems().filter(hasPassingGrade).reduce((sum, item) => sum + courseCredits(item), 0);
   }
 
-  function creditsBefore(sem) {
-    return plannedItems().filter((item) => item.sem < sem).reduce((sum, item) => sum + courseCredits(item), 0);
+  function creditsBefore(sem, options = {}) {
+    return plannedItems()
+      .filter((item) => item.sem < sem)
+      .filter((item) => !options.passedOnly || hasPassingGrade(item))
+      .reduce((sum, item) => sum + courseCredits(item), 0);
   }
 
   function gp(grade) {
@@ -203,10 +254,11 @@
     };
   }
 
-  function prereqStatus(code, sem) {
+  function prereqStatus(code, sem, options = {}) {
     const c = getCourse(code);
     if (!c) return { ok: true, missing: [] };
     const missing = [];
+    const requireGrades = Boolean(options.requireGrades);
     const pathwayAllowed = PATHWAY_COURSES[state.pathId] || new Set();
     (c.pre || []).forEach((pre) => {
       const preCourse = getCourse(pre);
@@ -218,9 +270,11 @@
       }
       if (!found) missing.push(pre);
       if (found && found.grade && FAIL_GRADES.has(found.grade)) missing.push(`${pre} failed`);
+      if (found && requireGrades && !found.grade) missing.push(`${pre} grade missing`);
     });
-    if (c.minCr && creditsBefore(sem) < c.minCr) missing.push(`${c.minCr}cr minimum`);
-    if (c.all && creditsBefore(sem) < currentProgram().total - c.cr) missing.push("finish other courses first");
+    const priorCredits = creditsBefore(sem, { passedOnly: requireGrades });
+    if (c.minCr && priorCredits < c.minCr) missing.push(`${c.minCr}cr minimum`);
+    if (c.all && priorCredits < currentProgram().total - c.cr) missing.push("finish other courses first");
     if (c.offer === "odd" && sem % 2 === 0) missing.push("odd semesters only");
     if (c.offer === "even" && sem % 2 === 1) missing.push("even semesters only");
     return { ok: missing.length === 0, missing };
@@ -243,7 +297,7 @@
   function availableCourses(sem) {
     const placement = placementMap();
     const committedTrack = committedTrackId();
-    const committedField = committedFieldId();
+    const committedField = committedFieldId() || state.fieldId;
     return currentProgram().courses.filter((course) => {
       const placed = placement[course.code];
       if (placed && !(placed.grade && FAIL_GRADES.has(placed.grade))) return false;
@@ -257,7 +311,7 @@
   function addableCourseRows(sem) {
     const placement = placementMap();
     const committedTrack = committedTrackId();
-    const committedField = committedFieldId();
+    const committedField = committedFieldId() || state.fieldId;
     return currentProgram().courses.filter((course) => {
       return !(course.cat === "D" && course.lang && course.lang !== state.langId);
     }).map((course) => {
@@ -407,7 +461,16 @@
     if (!holder) return;
     const p = currentProgram();
     if (!p.tracks || !p.tracks.length) {
-      holder.innerHTML = "";
+      if (!p.fFields || !p.fFields.length) {
+        holder.innerHTML = "";
+        return;
+      }
+      holder.innerHTML = `<select class="select" id="fieldSelect" aria-label="Economics field elective">${p.fFields.map((f) => `<option value="${f.id}" ${f.id === state.fieldId ? "selected" : ""}>Field Elective - ${f.en}</option>`).join("")}</select>`;
+      $("fieldSelect").onchange = (event) => {
+        state.fieldId = event.target.value;
+        saveState();
+        location.reload();
+      };
       return;
     }
     holder.innerHTML = `<select class="select" id="trackSelect">${p.tracks.map((t) => `<option value="${t.id}" ${t.id === state.trackId ? "selected" : ""}>${t.en}</option>`).join("")}</select>`;
@@ -448,16 +511,28 @@
       holder.innerHTML = "";
       return;
     }
-    const labels = {
-      MAN: "Mandarin",
+    const familyLabels = {
       ARA: "Arabic",
       JPN: "Japanese",
       FRA: "French",
       KOR: "Korean",
-      OTH: "Other language"
+      OTH: "Other Foreign Language"
     };
-    holder.innerHTML = `<select class="select" id="langSelect">${Object.entries(labels).map(([id, label]) => `<option value="${id}" ${state.langId === id ? "selected" : ""}>${label}</option>`).join("")}</select>`;
-    $("langSelect").onchange = (event) => {
+    holder.innerHTML = `<select class="select" id="langModeSelect" aria-label="Foreign language">
+      <option value="MAN" ${state.langMode === "MAN" ? "selected" : ""}>Mandarin</option>
+      <option value="OTH" ${state.langMode === "OTH" ? "selected" : ""}>Other language...</option>
+    </select>${state.langMode === "OTH" ? `<select class="select" id="langFamilySelect" aria-label="Language family">${Object.entries(familyLabels).map(([id, label]) => `<option value="${id}" ${state.langId === id ? "selected" : ""}>${label}</option>`).join("")}</select>` : ""}`;
+    $("langModeSelect").onchange = (event) => {
+      const nextMode = event.target.value;
+      const nextLang = nextMode === "OTH" ? (state.langId && state.langId !== "MAN" ? state.langId : "ARA") : "MAN";
+      substituteLangCourses(state.langId, nextLang);
+      state.langMode = nextMode;
+      state.langId = nextLang;
+      saveState();
+      location.reload();
+    };
+    const familySelect = $("langFamilySelect");
+    if (familySelect) familySelect.onchange = (event) => {
       substituteLangCourses(state.langId, event.target.value);
       state.langId = event.target.value;
       saveState();
@@ -525,6 +600,38 @@
     return component ? `${component.en} (Category ${cat})` : `Category ${cat}`;
   }
 
+  function courseListCourseDetail(course, committedTrack, committedField) {
+    const p = currentProgram();
+    if (course.track) {
+      const track = p.tracks?.find((item) => item.id === course.track);
+      const selected = committedTrack && committedTrack !== course.track ? " - locked by selected specialisation" : "";
+      return `Specialisation: ${track ? `${track.en} (${track.ms})` : course.track}${selected}`;
+    }
+    if (course.field) {
+      const field = p.fFields?.find((item) => item.id === course.field);
+      const selected = committedField && committedField !== course.field ? " - locked by selected field" : "";
+      return `Field: ${field ? `${field.en} (${field.ms})` : course.field}${selected}`;
+    }
+    return "";
+  }
+
+  function courseListSearchText(course) {
+    const prereqText = (course.pre || []).map((code) => {
+      const prereq = getCourse(code);
+      return prereq ? `${code} ${prereq.en} ${prereq.ms || ""}` : code;
+    }).join(" ");
+    const detailText = courseListCourseDetail(course, null, null);
+    return [
+      course.code,
+      course.en,
+      course.ms || "",
+      course.cat,
+      courseListCategoryLabel(course.cat),
+      detailText,
+      prereqText
+    ].join(" ").toLowerCase();
+  }
+
   function renderSemesterBars(id) {
     const holder = $(id);
     if (!holder) return;
@@ -540,7 +647,7 @@
     $("plannerTitle").textContent = currentProgram().nameEn || currentProgram().short;
     const p = currentProgram();
     const committedTrack = committedTrackId();
-    const committedField = committedFieldId();
+    const committedField = committedFieldId() || state.fieldId;
     const notices = [];
     if (committedTrack && p.tracks) {
       const dComponent = p.components.find((component) => component.l === "D");
@@ -569,7 +676,7 @@
       const courses = (state.plan[sem] || []).map((item, index) => {
         const c = getCourse(item.code);
         if (!c) return "";
-        const status = prereqStatus(c.code, sem);
+        const status = prereqStatus(c.code, sem, { requireGrades: true });
         const moveOptions = Array.from({ length: totalSems() }, (_, i) => i + 1).filter((target) => target !== sem);
         return `<article class="course cat-${c.cat}">
           <div class="course-code">${c.code}</div>
@@ -739,15 +846,47 @@
     return p.components.map((component) => {
       const list = (byCat[component.l] || []).sort((a, b) => a.code.localeCompare(b.code));
       if (!list.length) return "";
-      const options = [];
-      options.push(`<option disabled>── ${component.l}. ${component.en.toUpperCase()} ──</option>`);
-      list.forEach((course) => {
-        const label = optionLabel(course);
-        const disabled = course.disabled || !course.status.ok ? "disabled" : "";
-        options.push(`<option value="${course.code}" ${disabled}>${label}</option>`);
-      });
-      return `<optgroup label="${component.l}. ${component.en}">${options.join("")}</optgroup>`;
+      if (component.l === "D" && p.tracks && p.tracks.length && list.some((course) => course.track)) {
+        const committedTrack = committedTrackId();
+        const headerText = committedTrack
+          ? `Selected specialisation: ${p.tracks.find((track) => track.id === committedTrack)?.en || committedTrack}`
+          : `Choose ONE specialisation (${component.req} credits)`;
+        const groups = [`<optgroup label="D. ${component.en} - ${headerText}"><option disabled>${headerText}</option></optgroup>`];
+        p.tracks.forEach((track, index) => {
+          const trackList = list.filter((course) => course.track === track.id).sort((a, b) => a.code.localeCompare(b.code));
+          if (!trackList.length) return;
+          const locked = committedTrack && committedTrack !== track.id;
+          const label = `D${index + 1}. ${track.en} - ${track.ms}${locked ? " (locked)" : ""}`;
+          groups.push(`<optgroup label="${label}">${trackList.map(courseOptionHtml).join("")}</optgroup>`);
+        });
+        const shared = list.filter((course) => !course.track);
+        if (shared.length) {
+          groups.push(`<optgroup label="Shared specialisation courses">${shared.map(courseOptionHtml).join("")}</optgroup>`);
+        }
+        return groups.join("");
+      }
+      if (component.l === "F" && p.fFields && p.fFields.length && list.some((course) => course.field)) {
+        const committedField = committedFieldId() || state.fieldId;
+        const headerText = committedField
+          ? `Selected field: ${p.fFields.find((field) => field.id === committedField)?.en || committedField}`
+          : `Choose ONE field (${component.req} credits)`;
+        const groups = [`<optgroup label="F. ${component.en} - ${headerText}"><option disabled>${headerText}</option></optgroup>`];
+        p.fFields.forEach((field, index) => {
+          const fieldList = list.filter((course) => course.field === field.id).sort((a, b) => a.code.localeCompare(b.code));
+          if (!fieldList.length) return;
+          const locked = committedField && committedField !== field.id;
+          const label = `F${index + 1}. ${field.en} - ${field.ms} (${fieldList.length} courses, choose 6)${locked ? " (locked)" : ""}`;
+          groups.push(`<optgroup label="${label}">${fieldList.map(courseOptionHtml).join("")}</optgroup>`);
+        });
+        return groups.join("");
+      }
+      return `<optgroup label="${component.l}. ${component.en}">${list.map(courseOptionHtml).join("")}</optgroup>`;
     }).join("");
+  }
+
+  function courseOptionHtml(course) {
+    const disabled = course.disabled || !course.status.ok ? "disabled" : "";
+    return `<option value="${course.code}" ${disabled}>${optionLabel(course)}</option>`;
   }
 
   function optionLabel(course) {
@@ -765,16 +904,43 @@
       toast("No recommended plan for this selection");
       return;
     }
-    confirmDialog("Replace your current plan with the official recommended plan?", () => {
-      state.plan = emptyPlan();
-      Object.entries(rec).forEach(([sem, codes]) => {
-        state.plan[sem] = codes.map((code) => ({ code, grade: "" }));
+    if (p.fFields && p.fFields.length) {
+      const field = p.fFields.find((item) => item.id === state.fieldId);
+      if (!field) {
+        toast("Choose a field elective first");
+        return;
+      }
+      confirmDialog(`Replace your current plan with the recommended plan for ${field.en}?`, () => applyRecommendedPlan(applyFieldElectiveChoice(rec, state.fieldId)));
+      return;
+    }
+    confirmDialog("Replace your current plan with the official recommended plan?", () => applyRecommendedPlan(rec));
+  }
+
+  function applyFieldElectiveChoice(rec, fieldId) {
+    const p = currentProgram();
+    const schedule = FIELD_RECOMMENDED_SLOTS[p.id]?.[fieldId];
+    if (!schedule) return rec;
+    const out = {};
+    Object.entries(rec).forEach(([sem, codes]) => {
+      const replacement = schedule[Number(sem)] || [];
+      const base = codes.filter((code) => {
+        const course = getCourse(code);
+        return !(course && course.cat === "F" && course.field);
       });
-      if (state.langId && state.langId !== "MAN") substituteLangCourses("MAN", state.langId);
-      saveState();
-      renderPlanner();
-      toast("Recommended plan loaded");
+      out[sem] = base.concat(replacement);
     });
+    return out;
+  }
+
+  function applyRecommendedPlan(rec) {
+    state.plan = emptyPlan();
+    Object.entries(rec).forEach(([sem, codes]) => {
+      state.plan[sem] = codes.map((code) => ({ code, grade: "" }));
+    });
+    if (state.langId && state.langId !== "MAN") substituteLangCourses("MAN", state.langId);
+    saveState();
+    renderPlanner();
+    toast("Recommended plan loaded");
   }
 
   function resetCurrentPlan() {
@@ -929,7 +1095,7 @@
         issues.push({ kind: "load", tag: "Credits", mark: "!", title: `Semester ${sem} is overloaded`, detail: `${credits}/${MAX_CR} maximum credits planned.` });
       }
       (state.plan[sem] || []).forEach((item) => {
-        const status = prereqStatus(item.code, sem);
+        const status = prereqStatus(item.code, sem, { requireGrades: true });
         if (!status.ok) {
           issues.push({ kind: "rule", tag: "Rule", mark: LOCK_ICON, title: `${item.code} is locked`, detail: `Semester ${sem}: ${status.missing.join(", ")}.` });
         }
@@ -975,14 +1141,18 @@
       const committedTrack = committedTrackId();
       const committedField = committedFieldId();
       const rows = currentProgram().courses.filter((c) => {
-        const text = `${c.code} ${c.en} ${c.ms || ""} ${c.cat}`.toLowerCase();
+        const text = courseListSearchText(c);
         if (c.cat === "D" && c.lang && c.lang !== state.langId) return false;
-        if (c.cat === "D" && c.track && state.trackId && c.track !== state.trackId) return false;
-        if (c.cat === "D" && c.track && committedTrack && c.track !== committedTrack) return false;
-        if (c.cat === "F" && c.field && committedField && c.field !== committedField) return false;
         return !q || text.includes(q);
       });
-      $("courseRows").innerHTML = rows.map((c) => `<tr><td><strong>${c.code}</strong></td><td>${c.en}<br><span class="muted">${c.ms || ""}</span></td><td>${courseListCategoryLabel(c.cat)}</td><td>${c.cr} ${c.cr === 1 ? "credit" : "credits"}</td><td>${(c.pre || []).join(", ") || "None"}</td></tr>`).join("");
+      $("courseRows").innerHTML = rows.map((c) => {
+        const detail = courseListCourseDetail(c, committedTrack, committedField);
+        const prereqs = (c.pre || []).map((code) => {
+          const prereq = getCourse(code);
+          return prereq ? `${code} - ${prereq.en}` : code;
+        }).join("<br>") || "None";
+        return `<tr><td><strong>${c.code}</strong></td><td>${c.en}<br><span class="muted">${c.ms || ""}</span></td><td>${courseListCategoryLabel(c.cat)}${detail ? `<br><span class="muted">${detail}</span>` : ""}</td><td>${c.cr} ${c.cr === 1 ? "credit" : "credits"}</td><td>${prereqs}</td></tr>`;
+      }).join("");
     };
     input.oninput = draw;
     draw();
