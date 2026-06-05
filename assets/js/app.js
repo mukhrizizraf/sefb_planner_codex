@@ -79,6 +79,13 @@
   const PROGRAMS = window.SEFB.PROGRAMS;
   const GRADES = window.SEFB.GRADES;
   const $ = (id) => document.getElementById(id);
+  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[char]));
 
   const defaultState = () => ({
     programId: "BFIN",
@@ -165,6 +172,7 @@
     const p = currentProgram();
     if (!state.plan || typeof state.plan !== "object") state.plan = {};
     if (!state.sessions || typeof state.sessions !== "object") state.sessions = {};
+    if (!["light", "dark"].includes(state.theme)) state.theme = "light";
     if (!state.pathId) state.pathId = "L2";
     if (!state.langMode) state.langMode = state.langId && state.langId !== "MAN" ? "OTH" : "MAN";
     if (state.langMode !== "OTH") state.langMode = "MAN";
@@ -199,6 +207,10 @@
     state.lastSaved = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     renderSaveStatus();
+  }
+
+  function applyTheme() {
+    document.body.classList.toggle("dark-mode", state.theme === "dark");
   }
 
   function relativeTime(ts) {
@@ -236,8 +248,14 @@
     return item.grade && !FAIL_GRADES.has(item.grade);
   }
 
+  function hasCompletedCourse(item) {
+    if (!hasPassingGrade(item)) return false;
+    if (!item.sem) return true;
+    return prereqStatus(item.code, item.sem, { requireGrades: true }).ok;
+  }
+
   function completedCredits() {
-    return plannedItems().filter(hasPassingGrade).reduce((sum, item) => sum + courseCredits(item), 0);
+    return plannedItems().filter(hasCompletedCourse).reduce((sum, item) => sum + courseCredits(item), 0);
   }
 
   function creditsBefore(sem, options = {}) {
@@ -362,7 +380,7 @@
     effectiveComponents(p).forEach((comp) => {
       byCat[comp.l] = { ...comp, done: 0 };
     });
-    const items = options.completedOnly ? plannedItems().filter(hasPassingGrade) : plannedItems();
+    const items = options.completedOnly ? plannedItems().filter(hasCompletedCourse) : plannedItems();
     items.forEach((item) => {
       const c = getCourse(item.code);
       if (c && byCat[c.cat] && isCourseAllowedForPathway(c)) byCat[c.cat].done += c.cr;
@@ -470,6 +488,7 @@
     document.querySelectorAll("[data-nav]").forEach((node) => {
       node.innerHTML = nav.map(([href, label]) => `<a class="${active === href ? "active" : ""}" href="${href}">${label}</a>`).join("");
     });
+    renderThemeToggle();
     document.querySelectorAll("[data-program-select]").forEach((select) => {
       select.innerHTML = programOptions();
       select.value = state.programId;
@@ -487,6 +506,30 @@
     renderPathControl();
     renderLangControl();
     renderSaveStatus();
+  }
+
+  function renderThemeToggle() {
+    document.querySelectorAll(".side").forEach((side) => {
+      let card = side.querySelector("[data-theme-card]");
+      if (!card) {
+        card = document.createElement("div");
+        card.className = "theme-card";
+        card.setAttribute("data-theme-card", "");
+      }
+      const saveCard = side.querySelector("[data-save-status]");
+      side.insertBefore(card, saveCard || null);
+      const isDark = state.theme === "dark";
+      card.innerHTML = `<button class="theme-toggle" type="button" data-theme-toggle aria-pressed="${isDark ? "true" : "false"}">
+        <strong>${isDark ? "Light mode" : "Dark mode"}</strong>
+        <span>${isDark ? "Coffee night" : "Coffee cream"}</span>
+      </button>`;
+      card.querySelector("[data-theme-toggle]").onclick = () => {
+        state.theme = isDark ? "light" : "dark";
+        applyTheme();
+        saveState();
+        renderThemeToggle();
+      };
+    });
   }
 
   function renderSaveStatus() {
@@ -614,7 +657,11 @@
     $("cgpaOverview").dataset.tone = standing ? standing.tone : "empty";
     const value = hasCgpa ? g.cgpa : 0;
     const pct = Math.max(0, Math.min(100, (value / 4) * 100));
+    const angle = `${(pct / 100) * 360}deg`;
     gauge.style.setProperty("--cgpa", `${pct}%`);
+    const previousAngle = gauge.style.getPropertyValue("--cgpa-angle") || "0deg";
+    gauge.style.setProperty("--cgpa-angle", previousAngle);
+    requestAnimationFrame(() => gauge.style.setProperty("--cgpa-angle", angle));
     gauge.dataset.tone = standing ? standing.tone : "empty";
     $("cgpaGaugeValue").textContent = hasCgpa ? g.cgpa.toFixed(2) : "--";
     $("cgpaGaugeStanding").textContent = standing ? standing.label : "Awaiting grades";
@@ -715,7 +762,7 @@
     if (legendHolder) {
       const categoryLegend = effectiveComponents(p).map((component) => `
         <span class="legend-chip cat-${component.l}">
-          <strong>Category ${component.l}</strong>
+          <strong>${component.l}</strong>
           <span>${component.en}</span>
         </span>
       `).join("");
@@ -734,42 +781,53 @@
         const c = getCourse(item.code);
         if (!c) return "";
         const status = prereqStatus(c.code, sem, { requireGrades: true });
+        const locked = !status.ok;
+        const lockText = status.missing.join(", ");
+        const needsRetake = item.grade && FAIL_GRADES.has(item.grade);
         const moveOptions = Array.from({ length: totalSems() }, (_, i) => i + 1).filter((target) => target !== sem);
-        return `<article class="course cat-${c.cat}">
+        return `<article class="course cat-${c.cat} ${locked ? "locked" : ""}">
           <div class="course-code">${c.code}</div>
           <div class="course-main">
-            <div class="course-title">${c.en}</div>
+            <div class="course-title">${c.en}${needsRetake ? `<span class="retake-badge">Retake</span>` : ""}${locked ? `<span class="lock-badge">Locked</span>` : ""}</div>
             <div class="course-sub">${c.ms || ""} · ${categoryLabel(c.cat)}${c.ph ? " · Placeholder" : ""}</div>
-            ${status.ok ? "" : `<div class="course-lock">${LOCK_ICON} ${status.missing.join(", ")}</div>`}
+            ${locked ? `<div class="course-lock">Locked: ${lockText}</div>` : ""}
           </div>
           <div class="course-credit">${c.cr} CR</div>
           <div class="inline-actions">
-            <select class="select grade-select" data-grade="${sem}:${index}">
-              <option value="">--</option>
-              ${GRADES.map((g) => `<option value="${g.g}" ${item.grade === g.g ? "selected" : ""}>${g.g}</option>`).join("")}
-            </select>
-            <select class="select compact-select" data-move-target="${sem}:${index}">
-              <option value="">Move to...</option>
-              ${moveOptions.map((target) => `<option value="${target}">Semester ${target}</option>`).join("")}
-            </select>
+            <label class="course-action">
+              <span>Grade</span>
+              <select class="select grade-select" data-grade="${sem}:${index}" ${locked ? "disabled" : ""}>
+                <option value="">--</option>
+                ${GRADES.map((g) => `<option value="${g.g}" ${item.grade === g.g ? "selected" : ""}>${g.g}</option>`).join("")}
+              </select>
+            </label>
+            <label class="course-action move-action">
+              <span>Move</span>
+              <select class="select compact-select" data-move-target="${sem}:${index}">
+                <option value="">Move to...</option>
+                ${moveOptions.map((target) => `<option value="${target}">Semester ${target}</option>`).join("")}
+              </select>
+            </label>
             <button class="mini-button remove-button" data-remove="${sem}:${index}" title="Remove course" aria-label="Remove course">Remove course</button>
           </div>
         </article>`;
       }).join("");
       holder.innerHTML += `<section class="semester">
         <div class="semester-head">
-          <strong>Semester ${sem}</strong>
+          <div>
+            <strong>Semester ${sem}</strong>
+            <span>${credits} credits</span>
+          </div>
           <div class="semester-meta">
-            <button class="button dean-button" data-simulate-deans="${sem}">Simulate a Dean's List semester for me!</button>
+            ${credits ? `<button class="button dean-button" data-simulate-deans="${sem}">Dean's List simulation</button>` : ""}
             <select class="select session-select" data-session="${sem}" aria-label="Session for Semester ${sem}">
               ${SESSION_OPTIONS.map((item) => `<option value="${item}" ${session === item ? "selected" : ""}>${item}</option>`).join("")}
             </select>
-            <span>${credits} credits</span>
             <div class="term-gpa"><span>Term GPA</span><strong>${termText}</strong></div>
           </div>
         </div>
         <div class="semester-body">
-          ${courses || `<div class="empty-state"><strong>No courses planned.</strong><span>Use the grouped list below to add a subject.</span></div>`}
+          ${courses || `<div class="empty-state"><strong>No courses yet</strong><span>Add from the course list below.</span></div>`}
           <div class="dropdown-add">
             <select class="select add-select" data-add-select="${sem}">
               <option value="">+ Add course...</option>
@@ -954,6 +1012,51 @@
     return `${course.code} / ${course.en} (${course.cr}cr)`;
   }
 
+  function selectedPlanLabels() {
+    const p = currentProgram();
+    const track = p.tracks?.find((item) => item.id === state.trackId);
+    const field = p.fFields?.find((item) => item.id === state.fieldId);
+    const pathLabels = {
+      L1: "Path 1 - 9 credits (MUET 1.0-2.5)",
+      L2: "Path 2 - 6 credits (MUET 3.0-3.5)",
+      L3: "Path 3 - 6 credits (MUET 4.0-4.5)",
+      EX: "Exempted (MUET 5.0+)"
+    };
+    const langLabels = {
+      MAN: "Mandarin",
+      ARA: "Arabic",
+      JPN: "Japanese",
+      FRA: "French",
+      KOR: "Korean",
+      OTH: "Other Foreign Language"
+    };
+    return {
+      programme: programDisplayName(p),
+      track: track ? track.en : "",
+      field: field ? field.en : "",
+      path: pathLabels[state.pathId] || "English pathway",
+      language: state.langMode === "OTH" ? (langLabels[state.langId] || "Other Foreign Language") : "Mandarin"
+    };
+  }
+
+  function recommendedPlanDialog(fieldName = "") {
+    const labels = selectedPlanLabels();
+    return {
+      title: "Load recommended plan?",
+      message: "This will replace the current plan saved in this browser.",
+      details: [
+        `Programme: ${labels.programme}.`,
+        labels.track ? `Specialisation: ${labels.track}.` : "",
+        fieldName || labels.field ? `Field elective: ${fieldName || labels.field}.` : "",
+        `English pathway: ${labels.path}.`,
+        `Foreign language: ${labels.language}.`,
+        "Grades will stay blank; enter grades after results.",
+        "Semester loads may be rebalanced if the recommended structure exceeds the credit limit."
+      ].filter(Boolean),
+      note: "Use Cancel if you still need the current custom plan."
+    };
+  }
+
   function loadRecommended() {
     const p = currentProgram();
     const rec = p.recommended && p.recommended[state.trackId || ""];
@@ -967,10 +1070,10 @@
         toast("Choose a field elective first");
         return;
       }
-      confirmDialog(`Replace your current plan with the recommended plan for ${field.en}?`, () => applyRecommendedPlan(rebalanceRecommendedPlan(applyEnglishPathwayChoice(applyFieldElectiveChoice(rec, state.fieldId)))));
+      confirmDialog(recommendedPlanDialog(field.en), () => applyRecommendedPlan(rebalanceRecommendedPlan(applyEnglishPathwayChoice(applyFieldElectiveChoice(rec, state.fieldId)))));
       return;
     }
-    confirmDialog("Replace your current plan with the official recommended plan?", () => applyRecommendedPlan(rebalanceRecommendedPlan(applyEnglishPathwayChoice(rec))));
+    confirmDialog(recommendedPlanDialog(), () => applyRecommendedPlan(rebalanceRecommendedPlan(applyEnglishPathwayChoice(rec))));
   }
 
   function applyEnglishPathwayChoice(rec) {
@@ -1111,31 +1214,31 @@
     items.push({ ok: total >= requiredTotal, label: "Completed credits", value: `${total}/${requiredTotal}` });
     items.push({ ok: g.allPlannedGraded && g.cgpa >= 2, label: "Minimum CGPA 2.00", value: g.allPlannedGraded ? g.cgpa.toFixed(2) : `${g.gradedCourses}/${g.plannedCourses} courses graded` });
     const remaining = items.filter((item) => !item.ok).length;
-    const pendingPlaced = planned.filter((item) => !hasPassingGrade(item)).reduce((sum, item) => sum + courseCredits(item), 0);
-    const completion = items.length ? Math.round((items.filter((item) => item.ok).length / items.length) * 100) : 0;
+    const pendingPlaced = planned.filter((item) => !hasCompletedCourse(item)).reduce((sum, item) => sum + courseCredits(item), 0);
+    const passedProgress = requiredTotal ? Math.min(100, Math.round((total / requiredTotal) * 100)) : 0;
     const eligible = items.every((item) => item.ok);
     const degree = $("auditDegree");
     if (degree) degree.textContent = programDisplayName(p);
     $("auditSummary").innerHTML = `
       <div class="eyebrow">Final status</div>
       <h2>${eligible ? "Eligible To Graduate" : "Not Yet Eligible"}</h2>
-      <p>${remaining} requirement${remaining === 1 ? "" : "s"} remaining / ${pendingPlaced} credits placed but not yet passed</p>
-      <strong>${completion}%</strong>
-      <span>Checklist completion</span>
+      <p>${items.length - remaining} of ${items.length} graduation checks met / ${total} of ${requiredTotal} credits passed</p>
+      <strong>${passedProgress}%</strong>
+      <span>Graduation progress</span>
     `;
     const rows = Object.values(passedByCat).map((comp) => {
       const plannedComp = plannedByCat[comp.l] || comp;
       const pending = Math.max(0, plannedComp.done - comp.done);
       const pct = comp.req ? Math.min(100, Math.round((comp.done / comp.req) * 100)) : 100;
       const met = comp.done >= comp.req;
-      const note = pending ? `${pending} cr placed, not yet passed` : comp.ms;
+      const note = pending ? `${plannedComp.done} cr placed / ${comp.done} cr passed` : comp.ms;
       return { label: `${comp.l}. ${comp.en}`, detail: note, value: `${comp.done} / ${comp.req} cr passed`, pct, met, status: met ? "Met" : pending ? "Grading pending" : "Pending" };
     });
     rows.push({
       label: "Total Credits",
-      detail: `${placedTotal} cr placed in planner`,
+      detail: pendingPlaced ? `${placedTotal} cr placed / ${pendingPlaced} cr not yet passed` : `${placedTotal} cr placed in planner`,
       value: `${total} / ${requiredTotal} cr passed`,
-      pct: requiredTotal ? Math.min(100, Math.round((total / requiredTotal) * 100)) : 0,
+      pct: passedProgress,
       met: total >= requiredTotal,
       status: total >= requiredTotal ? "Met" : "Grading pending"
     });
@@ -1148,14 +1251,14 @@
       status: g.allPlannedGraded && g.cgpa >= 2 ? "Met" : "Grading pending"
     });
     $("auditList").innerHTML = rows.map((row) => `
-      <div class="audit-progress-row ${row.met ? "met" : ""}">
+      <div class="audit-progress-row ${row.met ? "met" : ""}" data-status="${row.status.toLowerCase().replace(/\s+/g, "-")}">
         <div>
           <strong>${row.label}</strong>
           <span>${row.detail}</span>
         </div>
         <div class="audit-line"><span style="--w:${row.pct}%"></span></div>
         <small>${row.value}</small>
-        <em>${row.status}</em>
+        <em><b>${row.met ? "MET" : "!"}</b>${row.status}</em>
       </div>
     `).join("");
     renderPortfolio(g, total, planned);
@@ -1180,7 +1283,7 @@
       {
         label: "First year cleared",
         detail: "Semester 1 and 2 courses have passing grades.",
-        earned: semOneTwo.length > 0 && semOneTwo.every(hasPassingGrade)
+        earned: semOneTwo.length > 0 && semOneTwo.every(hasCompletedCourse)
       },
       {
         label: "Halfway point",
@@ -1234,16 +1337,13 @@
       (state.plan[sem] || []).forEach((item) => {
         const status = prereqStatus(item.code, sem, { requireGrades: true });
         if (!status.ok) {
-          issues.push({ kind: "rule", tag: "Rule", mark: LOCK_ICON, title: `${item.code} is locked`, detail: `Semester ${sem}: ${status.missing.join(", ")}.` });
+          issues.push({ kind: "rule", tag: "Locked", mark: "-", title: `${item.code} (Sem ${sem})`, detail: status.missing.join(", ") });
         }
         if (!item.grade) ungraded.push(item.code);
         if (item.grade && FAIL_GRADES.has(item.grade)) {
-          issues.push({ kind: "retake", tag: "Retake", mark: "R", title: `${item.code} needs retake`, detail: "This grade does not count as completed credit." });
+          issues.push({ kind: "retake", tag: "Retake", mark: "!", title: `${item.code} (Sem ${sem}): ${item.grade}`, detail: "Retake required. This grade does not count as completed credit." });
         }
       });
-      if (ungraded.length) {
-        issues.push({ kind: "grades", tag: "Grades", mark: "A+", title: `Semester ${sem}: add missing grades`, detail: `${ungraded.length} course(s) still blank. No need to panic, just fill them after results.` });
-      }
     }
     const selectedTrack = committedTrackId() || state.trackId;
     const decisionMathSelected = (p.id === "BBANK" && selectedTrack === "MP") || (p.id === "BRMI" && selectedTrack === "DM");
@@ -1257,17 +1357,31 @@
       });
     }
     const count = $("alertCount");
-    if (count) count.textContent = issues.length ? `${issues.length} item${issues.length === 1 ? "" : "s"}` : "Clear";
-    holder.innerHTML = issues.length ? `<div class="action-board">${issues.map((issue) => `
-      <article class="fix-card ${issue.kind}">
-        <div class="fix-mark">${issue.mark}</div>
-        <div class="fix-copy">
-          <span>${issue.tag}</span>
+    const panel = $("takeNotePanel");
+    if (count) count.textContent = String(issues.length);
+    if (panel) panel.hidden = issues.length === 0;
+    if (panel) panel.classList.toggle("muted", Boolean(state.alertsMuted));
+    const visibleIssues = issues.slice(0, 6);
+    const moreCount = Math.max(0, issues.length - visibleIssues.length);
+    holder.innerHTML = issues.length ? state.alertsMuted
+      ? `<div class="take-note-muted">Alerts muted. Click Unmute to show retakes and locked courses.</div>`
+      : `<div class="take-note-list">${visibleIssues.map((issue) => `
+        <article class="take-note-item ${issue.kind}">
+          <span>${issue.mark}</span>
           <strong>${issue.title}</strong>
-          <p>${issue.detail}</p>
-        </div>
-      </article>
-    `).join("")}</div>` : `<div class="empty-fix"><strong>All clear for now.</strong><p>No planning alerts right now.</p></div>`;
+          <em>${issue.detail}</em>
+        </article>
+      `).join("")}${moreCount ? `<div class="take-note-more">+ ${moreCount} more item${moreCount === 1 ? "" : "s"} hidden to keep this page readable.</div>` : ""}</div>`
+      : "";
+    const mute = $("muteAlerts");
+    if (mute) {
+      mute.textContent = state.alertsMuted ? "Unmute" : "Mute";
+      mute.onclick = () => {
+        state.alertsMuted = !state.alertsMuted;
+        saveState();
+        renderAlerts();
+      };
+    };
   }
 
   function renderAnalytics() {
@@ -1371,7 +1485,7 @@
     setTimeout(() => node.classList.remove("show"), 1800);
   }
 
-  function confirmDialog(message, onOk) {
+  function confirmDialog(content, onOk) {
     let modal = $("confirmModal");
     if (!modal) {
       modal = document.createElement("div");
@@ -1379,12 +1493,21 @@
       modal.className = "confirm-modal";
       document.body.appendChild(modal);
     }
-    modal.innerHTML = `<div class="confirm-card">
+    const config = typeof content === "string" ? { message: content } : content;
+    const title = config.title ? `<h3>${escapeHtml(config.title)}</h3>` : "";
+    const details = Array.isArray(config.details) && config.details.length
+      ? `<ul class="confirm-details">${config.details.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+      : "";
+    const note = config.note ? `<small>${escapeHtml(config.note)}</small>` : "";
+    modal.innerHTML = `<div class="confirm-card ${details ? "with-details" : "simple"}">
       <div class="confirm-icon">!</div>
-      <p>${message}</p>
+      ${title}
+      <p>${escapeHtml(config.message || "")}</p>
+      ${details}
+      ${note}
       <div class="confirm-actions">
         <button class="button" data-confirm-cancel>Cancel</button>
-        <button class="button solid" data-confirm-ok>OK</button>
+        <button class="button solid" data-confirm-ok>Confirm</button>
       </div>
     </div>`;
     modal.classList.add("show");
@@ -1397,6 +1520,7 @@
 
   function boot() {
     normalizeState();
+    applyTheme();
     if (!state.lastSaved) saveState();
     const page = document.body.dataset.page;
     renderChrome(`${page}.html`);

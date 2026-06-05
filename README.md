@@ -33,4 +33,4 @@ https://YOUR-USERNAME.github.io/sefb-degree-planner/
 - The planner stores data in the student's own browser using `localStorage`.
 - No login or backend server is required.
 - If a student changes browser/device, their saved plan will not automatically follow them.
-- Students can download a backup file from the Profile page.
+- Students can download a backup file from the Backup & Reset utility page.
