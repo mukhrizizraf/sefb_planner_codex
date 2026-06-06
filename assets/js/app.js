@@ -98,7 +98,8 @@
     plan: {},
     sessions: {},
     extraSems: 0,
-    alertsMuted: false,
+    alertsMuted: true,
+    alertsMuteTouched: false,
     lastSaved: null
   });
 
@@ -173,6 +174,7 @@
     const p = currentProgram();
     if (!state.plan || typeof state.plan !== "object") state.plan = {};
     if (!state.sessions || typeof state.sessions !== "object") state.sessions = {};
+    if (!state.alertsMuteTouched) state.alertsMuted = true;
     if (!["light", "dark"].includes(state.theme)) state.theme = "light";
     if (!state.pathId) state.pathId = "L2";
     if (!state.langMode) state.langMode = state.langId && state.langId !== "MAN" ? "OTH" : "MAN";
@@ -781,6 +783,7 @@
       const commitment = notices.length ? `<div class="commitment-note">${notices.join(" / ")}</div>` : "";
       legendHolder.innerHTML = `<div class="legend-chips">${categoryLegend}</div>${commitment}`;
     }
+    renderAlerts();
     const holder = $("semesters");
     holder.innerHTML = "";
     const gpa = computeGPA();
@@ -1422,6 +1425,7 @@
       mute.textContent = state.alertsMuted ? "Unmute" : "Mute";
       mute.onclick = () => {
         state.alertsMuted = !state.alertsMuted;
+        state.alertsMuteTouched = true;
         saveState();
         renderAlerts();
       };

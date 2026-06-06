@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/img/sefb.png">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260606n">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260606o">
 </head>
 <body data-page="planner">
   <div class="site-shell">
@@ -30,6 +30,17 @@
           </div>
         </div>
         <section class="panel category-legend" id="plannerLegend"></section>
+        <section class="take-note-panel planner-take-note" id="takeNotePanel" hidden>
+          <div class="take-note-head">
+            <div class="take-note-title">
+              <span class="take-note-icon" aria-hidden="true">!</span>
+              <span>Take Note</span>
+              <strong id="alertCount">0</strong>
+            </div>
+            <button class="take-note-toggle" type="button" id="muteAlerts">Unmute</button>
+          </div>
+          <div class="take-note-body" id="alerts" aria-live="polite"></div>
+        </section>
         <section class="grid cols-2" id="semesters"></section>
         <section class="semester-add-panel">
           <button class="button" id="addSemester">+ Add semester</button>
@@ -38,7 +49,7 @@
     </main>
   </div>
   <script src="assets/js/sefb-data.js"></script>
-  <script src="assets/js/app.js?v=20260606h"></script>
+  <script src="assets/js/app.js?v=20260606i"></script>
 </body>
 </html>
 

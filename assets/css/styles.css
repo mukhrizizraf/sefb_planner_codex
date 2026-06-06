@@ -1550,6 +1550,15 @@ body.dark-mode .take-note-item.rule {
   color: var(--cream);
 }
 
+body[data-page="planner"] .planner-take-note {
+  margin: -18px 0 24px;
+  padding: 22px 24px;
+}
+
+body[data-page="planner"] .planner-take-note .take-note-body {
+  margin-top: 14px;
+}
+
 .audit-status {
   display: grid;
   place-items: center;
