@@ -1336,7 +1336,7 @@ body.dark-mode .dropdown-add .button.solid {
   border: 1px solid color-mix(in srgb, var(--brown) 24%, var(--line));
   background:
     linear-gradient(90deg, rgba(14, 12, 10, .86), rgba(14, 12, 10, .58) 48%, rgba(14, 12, 10, .2)),
-    url("../img/convocation.jpg") center/cover;
+    url("../img/library.jpg") center/cover;
   color: var(--cream);
   box-shadow: 0 18px 44px rgba(58, 42, 28, .12);
 }
@@ -2684,7 +2684,7 @@ body.dark-mode[data-page="planner"] .semester-add-panel {
     padding: 28px;
     background:
       linear-gradient(180deg, rgba(14, 12, 10, .38), rgba(14, 12, 10, .84)),
-      url("../img/convocation.jpg") center/cover;
+      url("../img/library.jpg") center/cover;
   }
   .audit-hero-image .button {
     justify-self: start;
