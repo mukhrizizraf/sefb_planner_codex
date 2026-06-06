@@ -1376,7 +1376,6 @@
     const p = currentProgram();
     for (let sem = 1; sem <= totalSems(); sem++) {
       const credits = (state.plan[sem] || []).reduce((sum, item) => sum + courseCredits(item), 0);
-      const ungraded = [];
       if (credits > 0 && credits < MIN_CR && !(p.shortSems || []).includes(sem)) {
         issues.push({ kind: "load", title: `Semester ${sem}: ${credits} cr`, detail: `under minimum (${MIN_CR})` });
       }
@@ -1385,10 +1384,10 @@
       }
       (state.plan[sem] || []).forEach((item) => {
         const status = prereqStatus(item.code, sem, { requireGrades: true });
-        if (!status.ok) {
-          issues.push({ kind: "rule", title: `${item.code} (Sem ${sem})`, detail: `locked: ${status.missing.join(", ")}` });
+        const realRuleIssues = status.missing.filter((issue) => !issue.includes("grade missing"));
+        if (realRuleIssues.length) {
+          issues.push({ kind: "rule", title: `${item.code} (Sem ${sem})`, detail: `locked: ${realRuleIssues.join(", ")}` });
         }
-        if (!item.grade) ungraded.push(item.code);
         if (item.grade && FAIL_GRADES.has(item.grade)) {
           issues.push({ kind: "retake", title: `${item.code} (Sem ${sem}): ${item.grade}`, detail: "retake required (UUM rule c)" });
         }
