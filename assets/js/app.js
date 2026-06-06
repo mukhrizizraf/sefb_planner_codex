@@ -98,6 +98,7 @@
     plan: {},
     sessions: {},
     extraSems: 0,
+    alertsMuted: false,
     lastSaved: null
   });
 
@@ -1374,19 +1375,19 @@
       const credits = (state.plan[sem] || []).reduce((sum, item) => sum + courseCredits(item), 0);
       const ungraded = [];
       if (credits > 0 && credits < MIN_CR && !(p.shortSems || []).includes(sem)) {
-        issues.push({ kind: "load", tag: "Credits", mark: "!", title: `Semester ${sem} is underloaded`, detail: `${credits}/${MIN_CR} minimum credits planned.` });
+        issues.push({ kind: "load", title: `Semester ${sem}: ${credits} cr`, detail: `under minimum (${MIN_CR})` });
       }
       if (credits > MAX_CR) {
-        issues.push({ kind: "load", tag: "Credits", mark: "!", title: `Semester ${sem} is overloaded`, detail: `${credits}/${MAX_CR} maximum credits planned.` });
+        issues.push({ kind: "load", title: `Semester ${sem}: ${credits} cr`, detail: `over maximum (${MAX_CR})` });
       }
       (state.plan[sem] || []).forEach((item) => {
         const status = prereqStatus(item.code, sem, { requireGrades: true });
         if (!status.ok) {
-          issues.push({ kind: "rule", tag: "Locked", mark: "-", title: `${item.code} (Sem ${sem})`, detail: status.missing.join(", ") });
+          issues.push({ kind: "rule", title: `${item.code} (Sem ${sem})`, detail: `locked: ${status.missing.join(", ")}` });
         }
         if (!item.grade) ungraded.push(item.code);
         if (item.grade && FAIL_GRADES.has(item.grade)) {
-          issues.push({ kind: "retake", tag: "Retake", mark: "!", title: `${item.code} (Sem ${sem}): ${item.grade}`, detail: "Retake required. This grade does not count as completed credit." });
+          issues.push({ kind: "retake", title: `${item.code} (Sem ${sem}): ${item.grade}`, detail: "retake required (UUM rule c)" });
         }
       });
     }
@@ -1395,8 +1396,6 @@
     if (decisionMathSelected && plannedCredits() > effectiveTotalCredits(p)) {
       issues.push({
         kind: "load",
-        tag: "Credit note",
-        mark: "+1",
         title: "Decision Mathematics adds one extra credit",
         detail: "Calculus I is 4 credits, so this route can finish at 121 credits instead of 120. This is a note, not a blocker."
       });
@@ -1408,15 +1407,15 @@
     if (panel) panel.classList.toggle("muted", Boolean(state.alertsMuted));
     const visibleIssues = issues.slice(0, 6);
     const moreCount = Math.max(0, issues.length - visibleIssues.length);
+    const issueLabel = issues.length === 1 ? "issue" : "issues";
     holder.innerHTML = issues.length ? state.alertsMuted
-      ? `<div class="take-note-muted">Alerts muted. Click Unmute to show retakes and locked courses.</div>`
+      ? `<p class="take-note-muted">Alerts muted — ${issues.length} ${issueLabel} hidden.</p>`
       : `<div class="take-note-list">${visibleIssues.map((issue) => `
         <article class="take-note-item ${issue.kind}">
-          <span>${issue.mark}</span>
-          <strong>${issue.title}</strong>
-          <em>${issue.detail}</em>
+          <span class="take-note-item-text"><strong>${escapeHtml(issue.title)}</strong> — ${escapeHtml(issue.detail)}</span>
+          <span class="take-note-dismiss" aria-hidden="true">&times;</span>
         </article>
-      `).join("")}${moreCount ? `<div class="take-note-more">+ ${moreCount} more item${moreCount === 1 ? "" : "s"} hidden to keep this page readable.</div>` : ""}</div>`
+      `).join("")}${moreCount ? `<div class="take-note-more">+ ${moreCount} more ${moreCount === 1 ? "issue" : "issues"} hidden to keep this page readable.</div>` : ""}</div>`
       : "";
     const mute = $("muteAlerts");
     if (mute) {

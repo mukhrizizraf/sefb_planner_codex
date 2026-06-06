@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;700&family=Libre+Caslon+Text:wght@400;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/img/sefb.png">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260606m">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260606n">
 </head>
 <body data-page="audit">
   <div class="site-shell">
@@ -25,6 +25,18 @@
             <p class="muted" id="auditDegree">--</p>
           </div>
           <a class="button" href="planner.html">Edit plan</a>
+        </section>
+
+        <section class="take-note-panel" id="takeNotePanel" hidden>
+          <div class="take-note-head">
+            <div class="take-note-title">
+              <span class="take-note-icon" aria-hidden="true">!</span>
+              <span>Take Note</span>
+              <strong id="alertCount">0</strong>
+            </div>
+            <button class="take-note-toggle" type="button" id="muteAlerts">Mute</button>
+          </div>
+          <div class="take-note-body" id="alerts" aria-live="polite"></div>
         </section>
 
         <section class="audit-status" id="auditSummary"></section>
@@ -104,7 +116,7 @@
     </main>
   </div>
   <script src="assets/js/sefb-data.js"></script>
-  <script src="assets/js/app.js?v=20260606g"></script>
+  <script src="assets/js/app.js?v=20260606h"></script>
 </body>
 </html>
 
