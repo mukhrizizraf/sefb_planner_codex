@@ -1327,6 +1327,56 @@ body.dark-mode .dropdown-add .button.solid {
   line-height: .98;
 }
 
+.audit-hero-image {
+  min-height: 390px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  padding: 42px;
+  border: 1px solid color-mix(in srgb, var(--brown) 24%, var(--line));
+  background:
+    linear-gradient(90deg, rgba(14, 12, 10, .86), rgba(14, 12, 10, .58) 48%, rgba(14, 12, 10, .2)),
+    url("../img/convocation.jpg") center/cover;
+  color: var(--cream);
+  box-shadow: 0 18px 44px rgba(58, 42, 28, .12);
+}
+
+.audit-hero-image .audit-hero-copy {
+  max-width: 820px;
+}
+
+.audit-hero-image .eyebrow {
+  margin-bottom: 14px;
+  color: rgba(248, 242, 222, .72);
+}
+
+.audit-hero-image h2 {
+  color: var(--cream);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .32);
+}
+
+.audit-hero-image .muted {
+  max-width: 760px;
+  color: rgba(248, 242, 222, .86);
+  font-size: 18px;
+}
+
+.audit-hero-image .button {
+  border-color: rgba(248, 242, 222, .82);
+  background: rgba(248, 242, 222, .96);
+  color: #1d1b18;
+}
+
+.audit-hero-image .button:hover {
+  background: var(--cream);
+  color: #1d1b18;
+}
+
+body.dark-mode .audit-hero-image {
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--line));
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .34);
+}
+
 .audit-status {
   display: grid;
   place-items: center;
@@ -2627,6 +2677,17 @@ body.dark-mode[data-page="planner"] .semester-add-panel {
   .audit-hero-head {
     display: grid;
     margin-bottom: 30px;
+  }
+  .audit-hero-image {
+    min-height: 430px;
+    align-items: end;
+    padding: 28px;
+    background:
+      linear-gradient(180deg, rgba(14, 12, 10, .38), rgba(14, 12, 10, .84)),
+      url("../img/convocation.jpg") center/cover;
+  }
+  .audit-hero-image .button {
+    justify-self: start;
   }
   .audit-status {
     min-height: 220px;
