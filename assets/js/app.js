@@ -1561,6 +1561,7 @@
 
   function boot() {
     normalizeState();
+    state.alertsMuted = true;
     applyTheme();
     if (!state.lastSaved) saveState();
     const page = document.body.dataset.page;
