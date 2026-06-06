@@ -339,7 +339,7 @@ body[data-page="planner"] .program-controls .select {
   align-items: end;
   background:
     linear-gradient(90deg, rgba(10,10,10,.84), rgba(10,10,10,.58) 42%, rgba(10,10,10,.18) 78%),
-    url("../img/sefb-hero-professional.png") center/cover;
+    url("../img/dms.jpeg") center/cover;
 }
 
 .hero-copy {
