@@ -776,7 +776,7 @@
       const credits = (state.plan[sem] || []).reduce((sum, item) => sum + courseCredits(item), 0);
       const session = state.sessions?.[sem] || SESSION_OPTIONS[Math.min(sem - 1, SESSION_OPTIONS.length - 1)];
       const term = gpa.per[sem - 1];
-      const termText = !term || !term.plannedCourses ? "--" : term.allGraded && term.gpa !== null ? term.gpa.toFixed(2) : term.gradedCourses ? `${term.gradedCourses}/${term.plannedCourses}` : "--";
+      const termText = !term || term.gpa === null ? "--" : term.gpa.toFixed(2);
       const courses = (state.plan[sem] || []).map((item, index) => {
         const c = getCourse(item.code);
         if (!c) return "";
@@ -1070,10 +1070,10 @@
         toast("Choose a field elective first");
         return;
       }
-      confirmDialog(recommendedPlanDialog(field.en), () => applyRecommendedPlan(rebalanceRecommendedPlan(applyEnglishPathwayChoice(applyFieldElectiveChoice(rec, state.fieldId)))));
+      confirmDialog(recommendedPlanDialog(field.en), () => applyRecommendedPlan(rebalanceRecommendedPlan(ensureRecommendedPrereqOrder(applyEnglishPathwayChoice(applyFieldElectiveChoice(rec, state.fieldId))))));
       return;
     }
-    confirmDialog(recommendedPlanDialog(), () => applyRecommendedPlan(rebalanceRecommendedPlan(applyEnglishPathwayChoice(rec))));
+    confirmDialog(recommendedPlanDialog(), () => applyRecommendedPlan(rebalanceRecommendedPlan(ensureRecommendedPrereqOrder(applyEnglishPathwayChoice(rec)))));
   }
 
   function applyEnglishPathwayChoice(rec) {
@@ -1123,6 +1123,40 @@
       const course = getCourse(code);
       return sum + (course ? course.cr : 0);
     }, 0);
+  }
+
+  function ensureRecommendedPrereqOrder(rec) {
+    const plan = {};
+    Object.entries(rec).forEach(([sem, codes]) => {
+      plan[sem] = [...codes];
+    });
+    const findSem = (code) => {
+      const hit = Object.entries(plan).find(([, codes]) => codes.includes(code));
+      return hit ? Number(hit[0]) : null;
+    };
+    for (let guard = 0; guard < 60; guard++) {
+      let changed = false;
+      const sems = Object.keys(plan).map(Number).sort((a, b) => a - b);
+      sems.forEach((sem) => {
+        [...(plan[sem] || [])].forEach((code) => {
+          const course = getCourse(code);
+          if (!course || !course.pre || !course.pre.length) return;
+          const latestPrereqSem = course.pre.reduce((latest, pre) => {
+            const preSem = findSem(pre);
+            return preSem ? Math.max(latest, preSem) : latest;
+          }, 0);
+          if (latestPrereqSem && latestPrereqSem >= sem) {
+            plan[String(sem)] = (plan[String(sem)] || []).filter((item) => item !== code);
+            const target = String(latestPrereqSem + 1);
+            plan[target] = plan[target] || [];
+            if (!plan[target].includes(code)) plan[target].push(code);
+            changed = true;
+          }
+        });
+      });
+      if (!changed) break;
+    }
+    return plan;
   }
 
   function hasLaterDependent(plan, code, sem) {

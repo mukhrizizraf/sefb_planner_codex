@@ -1541,6 +1541,31 @@ body.dark-mode .audit-progress-row {
   margin: 4px 0 12px;
 }
 
+.advisor-list {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.advisor-list li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.advisor-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .7em;
+  width: 6px;
+  height: 1px;
+  background: var(--brown);
+}
+
 .audit-advisor .action-board {
   margin-top: 20px;
   gap: 0;
@@ -2195,6 +2220,324 @@ body.dark-mode .shot-note {
   background: var(--paper);
 }
 
+/* Planner UI Max pass: scoped so the original site and other pages stay stable. */
+body[data-page="planner"] {
+  --planner-surface: color-mix(in srgb, var(--bone) 84%, var(--paper));
+  --planner-panel: color-mix(in srgb, var(--paper) 84%, var(--bone));
+  --planner-border: color-mix(in srgb, var(--brown) 22%, var(--line));
+}
+
+body[data-page="planner"] .topbar {
+  grid-template-columns: minmax(300px, .78fr) minmax(420px, 1.22fr);
+  gap: 26px;
+  padding: 24px;
+  border-color: var(--planner-border);
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.46), rgba(255,255,255,0) 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--amber) 9%, var(--paper)), var(--planner-surface));
+  box-shadow: 0 18px 42px rgba(80, 50, 28, .08);
+}
+
+body[data-page="planner"] .planner-title-card {
+  padding: 20px 22px;
+  border-color: color-mix(in srgb, var(--brown) 20%, var(--line));
+  border-top: 3px solid color-mix(in srgb, var(--brown) 74%, var(--amber));
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.50), rgba(255,255,255,.10)),
+    color-mix(in srgb, var(--amber) 7%, var(--paper));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.54);
+}
+
+body[data-page="planner"] #plannerTitle {
+  max-width: 520px;
+  font-size: clamp(28px, 2.6vw, 40px);
+  line-height: 1.04;
+}
+
+body[data-page="planner"] .program-controls {
+  grid-template-columns: repeat(2, minmax(210px, 1fr));
+  gap: 12px;
+  align-content: center;
+}
+
+body[data-page="planner"] .program-controls .select,
+body[data-page="planner"] .session-select,
+body[data-page="planner"] .grade-select,
+body[data-page="planner"] .compact-select,
+body[data-page="planner"] .add-select {
+  border-color: color-mix(in srgb, var(--brown) 24%, var(--line));
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.20)),
+    color-mix(in srgb, var(--paper) 88%, var(--bone));
+  color: var(--ink);
+}
+
+body[data-page="planner"] .program-controls .select:focus,
+body[data-page="planner"] .session-select:focus,
+body[data-page="planner"] .grade-select:focus,
+body[data-page="planner"] .compact-select:focus,
+body[data-page="planner"] .add-select:focus {
+  outline: 3px solid color-mix(in srgb, var(--amber) 28%, transparent);
+  border-color: color-mix(in srgb, var(--brown) 62%, var(--amber));
+}
+
+body[data-page="planner"] .program-controls .button {
+  min-height: 52px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+body[data-page="planner"] .program-controls .button.solid {
+  border-color: color-mix(in srgb, var(--charcoal) 88%, var(--brown));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--brown) 22%, var(--charcoal)), var(--charcoal));
+  color: var(--cream);
+}
+
+body[data-page="planner"] .program-controls .button.danger {
+  border-color: color-mix(in srgb, var(--red) 70%, var(--line));
+  background: color-mix(in srgb, var(--red) 4%, var(--paper));
+  color: var(--red);
+}
+
+body[data-page="planner"] .category-legend {
+  padding: 22px 24px;
+  border-color: var(--planner-border);
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--amber) 9%, transparent), transparent 44%),
+    var(--planner-surface);
+  box-shadow: 0 14px 34px rgba(80, 50, 28, .06);
+}
+
+body[data-page="planner"] .legend-chips {
+  gap: 12px;
+}
+
+body[data-page="planner"] .legend-chip {
+  min-height: 36px;
+  padding: 7px 13px;
+  border-color: color-mix(in srgb, var(--cat) 28%, var(--line));
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.52), rgba(255,255,255,.08)),
+    color-mix(in srgb, var(--cat) 7%, var(--paper));
+}
+
+body[data-page="planner"] .legend-chip strong {
+  font-size: 10px;
+  letter-spacing: .11em;
+}
+
+body[data-page="planner"] .legend-chip span {
+  font-size: 13px;
+}
+
+body[data-page="planner"] .commitment-note {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--brown) 16%, var(--line));
+}
+
+body[data-page="planner"] .semester {
+  overflow: hidden;
+  border-color: var(--planner-border);
+  border-radius: 6px;
+  background: var(--planner-panel);
+  box-shadow: 0 16px 38px rgba(80, 50, 28, .07);
+}
+
+body[data-page="planner"] .semester-head {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto;
+  padding: 18px 22px;
+  border-bottom-color: color-mix(in srgb, var(--brown) 18%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--amber) 14%, var(--paper)), color-mix(in srgb, var(--bone) 86%, var(--paper)));
+}
+
+body[data-page="planner"] .semester-head strong {
+  font-size: 18px;
+}
+
+body[data-page="planner"] .semester-meta {
+  gap: 12px;
+}
+
+body[data-page="planner"] .dean-button {
+  min-height: 38px;
+  border-color: color-mix(in srgb, var(--brown) 38%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.04)),
+    color-mix(in srgb, var(--amber) 16%, var(--paper));
+  color: color-mix(in srgb, var(--brown) 78%, var(--ink));
+}
+
+body[data-page="planner"] .dean-button:hover {
+  border-color: color-mix(in srgb, var(--brown) 70%, var(--amber));
+  background: color-mix(in srgb, var(--amber) 24%, var(--paper));
+}
+
+body[data-page="planner"] .term-gpa {
+  min-width: 88px;
+}
+
+body[data-page="planner"] .term-gpa strong {
+  font-size: 26px;
+}
+
+body[data-page="planner"] .semester-body {
+  padding: 10px 20px 18px;
+}
+
+body[data-page="planner"] .course {
+  grid-template-columns: 98px minmax(280px, 1fr) 58px minmax(322px, auto);
+  gap: 18px;
+  min-height: 84px;
+  padding: 15px 12px 15px 16px;
+  border-left-width: 4px;
+}
+
+body[data-page="planner"] .course-code {
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--muted) 86%, var(--ink));
+}
+
+body[data-page="planner"] .course-title {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+body[data-page="planner"] .course-sub {
+  max-width: 100%;
+  font-size: 12.5px;
+  white-space: normal;
+}
+
+body[data-page="planner"] .course-credit {
+  text-align: right;
+  font-weight: 900;
+}
+
+body[data-page="planner"] .inline-actions {
+  gap: 10px;
+}
+
+body[data-page="planner"] .course-action span {
+  margin-bottom: 2px;
+  color: color-mix(in srgb, var(--brown) 56%, var(--muted));
+}
+
+body[data-page="planner"] .grade-select {
+  width: 92px;
+}
+
+body[data-page="planner"] .compact-select {
+  width: 142px;
+}
+
+body[data-page="planner"] .mini-button {
+  min-height: 44px;
+  border-radius: 4px;
+  border-color: color-mix(in srgb, var(--brown) 20%, var(--line));
+}
+
+body[data-page="planner"] .remove-button {
+  min-width: 128px;
+}
+
+body[data-page="planner"] .dropdown-add {
+  margin-top: 14px;
+}
+
+body[data-page="planner"] .empty-state {
+  border-radius: 4px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--amber) 9%, transparent), transparent 56%),
+    color-mix(in srgb, var(--bone) 66%, var(--paper));
+}
+
+body[data-page="planner"] .semester-add-panel {
+  border-color: color-mix(in srgb, var(--brown) 18%, var(--line-strong));
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--amber) 7%, transparent), transparent 54%),
+    color-mix(in srgb, var(--bone) 72%, transparent);
+}
+
+body.dark-mode[data-page="planner"] {
+  --planner-surface: #1a140f;
+  --planner-panel: #1c1711;
+  --planner-border: color-mix(in srgb, var(--brown) 28%, var(--line));
+}
+
+body.dark-mode[data-page="planner"] .topbar,
+body.dark-mode[data-page="planner"] .category-legend,
+body.dark-mode[data-page="planner"] .semester {
+  background:
+    linear-gradient(135deg, rgba(197,139,79,.08), rgba(197,139,79,0) 42%),
+    var(--planner-surface);
+  box-shadow: 0 18px 44px rgba(0,0,0,.22);
+}
+
+body.dark-mode[data-page="planner"] .planner-title-card,
+body.dark-mode[data-page="planner"] .semester-head {
+  background:
+    linear-gradient(180deg, rgba(255,243,220,.055), rgba(255,243,220,0)),
+    #211910;
+}
+
+body.dark-mode[data-page="planner"] .program-controls .select,
+body.dark-mode[data-page="planner"] .session-select,
+body.dark-mode[data-page="planner"] .grade-select,
+body.dark-mode[data-page="planner"] .compact-select,
+body.dark-mode[data-page="planner"] .add-select,
+body.dark-mode[data-page="planner"] .mini-button {
+  border-color: color-mix(in srgb, var(--brown) 30%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255,243,220,.045), rgba(255,243,220,0)),
+    #19130e;
+  color: var(--ink);
+}
+
+body.dark-mode[data-page="planner"] .program-controls .button.solid,
+body.dark-mode[data-page="planner"] .dropdown-add .button.solid {
+  border-color: color-mix(in srgb, var(--amber) 56%, var(--line));
+  background: linear-gradient(180deg, #d19a5d, #b7773b);
+  color: #15100b;
+}
+
+body.dark-mode[data-page="planner"] .program-controls .button.danger {
+  background: rgba(211,111,104,.06);
+}
+
+body.dark-mode[data-page="planner"] .legend-chip {
+  background:
+    linear-gradient(180deg, rgba(255,243,220,.05), rgba(255,243,220,0)),
+    color-mix(in srgb, var(--cat) 12%, #17120d);
+}
+
+body.dark-mode[data-page="planner"] .course[class*="cat-"] {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--cat) 12%, #1a140f), #18130e 50%);
+}
+
+body.dark-mode[data-page="planner"] .course.locked {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--red) 22%, #1a140f), color-mix(in srgb, var(--red) 8%, #18130e) 50%);
+}
+
+body.dark-mode[data-page="planner"] .empty-state,
+body.dark-mode[data-page="planner"] .semester-add-panel {
+  background:
+    linear-gradient(135deg, rgba(197,139,79,.07), transparent 54%),
+    #19130e;
+}
+
 @media (max-width: 1180px) {
   .course {
     grid-template-columns: 78px minmax(220px, 1fr) 48px minmax(260px, auto);
@@ -2386,5 +2729,1005 @@ body.dark-mode .shot-note {
 
   .session-select {
     width: 100%;
+  }
+}
+
+/* Planner visual reset v2: cleaner coffee studio treatment for site 2 only. */
+body[data-page="planner"] {
+  --planner-card: color-mix(in srgb, var(--paper) 82%, var(--bone));
+  --planner-card-2: color-mix(in srgb, var(--bone) 88%, #ead8c3);
+  --planner-stroke: color-mix(in srgb, var(--brown) 20%, var(--line));
+  --planner-stroke-strong: color-mix(in srgb, var(--brown) 46%, var(--line));
+  --planner-wash: color-mix(in srgb, var(--brown) 8%, var(--surface));
+  --planner-shadow: 0 18px 46px rgba(76, 48, 28, .08);
+}
+
+body[data-page="planner"] .container {
+  max-width: 1360px;
+}
+
+body[data-page="planner"] .topbar.planner-setup {
+  display: grid;
+  grid-template-columns: minmax(300px, .78fr) minmax(560px, 1.22fr);
+  gap: 28px;
+  align-items: stretch;
+  margin-bottom: 22px;
+  padding: 24px;
+  border: 1px solid var(--planner-stroke);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 0 0, rgba(154, 93, 45, .13), transparent 32%),
+    linear-gradient(135deg, rgba(255,255,255,.66), rgba(249,244,238,.9));
+  box-shadow: var(--planner-shadow);
+}
+
+body[data-page="planner"] .planner-title-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 168px;
+  padding: 22px 24px;
+  border: 1px solid color-mix(in srgb, var(--brown) 17%, var(--line));
+  border-left: 4px solid color-mix(in srgb, var(--brown) 78%, var(--amber));
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.82), rgba(249,244,238,.72)),
+    color-mix(in srgb, var(--bone) 90%, #ead2b8);
+}
+
+body[data-page="planner"] .planner-title-card .eyebrow {
+  margin-bottom: 10px;
+  color: color-mix(in srgb, var(--brown) 64%, var(--muted));
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+
+body[data-page="planner"] #plannerTitle {
+  max-width: 560px;
+  margin: 0;
+  font-size: clamp(30px, 2.55vw, 42px);
+  line-height: 1.03;
+  letter-spacing: -.025em;
+}
+
+body[data-page="planner"] .program-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+  align-content: stretch;
+}
+
+body[data-page="planner"] .program-controls > select:first-child {
+  grid-column: 1 / -1;
+}
+
+body[data-page="planner"] .program-controls > *,
+body[data-page="planner"] .program-controls span,
+body[data-page="planner"] .program-controls select,
+body[data-page="planner"] .program-controls .button {
+  width: 100%;
+  min-width: 0;
+}
+
+body[data-page="planner"] .select,
+body[data-page="planner"] .button {
+  min-height: 50px;
+  border-radius: 4px;
+}
+
+body[data-page="planner"] .program-controls .select {
+  border-color: color-mix(in srgb, var(--brown) 18%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.8), rgba(249,244,238,.45)),
+    var(--paper);
+}
+
+body[data-page="planner"] .program-controls .button.solid {
+  border-color: #171717;
+  background:
+    linear-gradient(180deg, #20201e, #151515);
+  color: var(--cream);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+body[data-page="planner"] .program-controls .button.danger {
+  border-color: color-mix(in srgb, var(--red) 70%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.68), rgba(249,244,238,.75));
+  color: color-mix(in srgb, var(--red) 84%, #421a16);
+}
+
+body[data-page="planner"] .category-legend {
+  margin-bottom: 22px;
+  padding: 22px 24px;
+  border: 1px solid var(--planner-stroke);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(177, 120, 58, .1), transparent 32%),
+    linear-gradient(180deg, rgba(255,255,255,.62), rgba(249,244,238,.88));
+  box-shadow: 0 14px 36px rgba(76, 48, 28, .055);
+}
+
+body[data-page="planner"] .legend-grid {
+  gap: 10px;
+}
+
+body[data-page="planner"] .legend-chip {
+  min-height: 42px;
+  padding: 10px 14px 10px 15px;
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--cat) 44%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.76), rgba(255,255,255,.3)),
+    color-mix(in srgb, var(--cat) 9%, var(--paper));
+  box-shadow: none;
+}
+
+body[data-page="planner"] .legend-chip::before {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--cat);
+}
+
+body[data-page="planner"] .legend-chip strong {
+  color: color-mix(in srgb, var(--cat) 74%, var(--ink));
+  font-size: 11px;
+}
+
+body[data-page="planner"] .legend-chip span {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+body[data-page="planner"] .semester {
+  overflow: hidden;
+  border: 1px solid var(--planner-stroke);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.72), rgba(249,244,238,.88)),
+    var(--planner-card);
+  box-shadow: 0 12px 34px rgba(76, 48, 28, .055);
+}
+
+body[data-page="planner"] .semester-head {
+  grid-template-columns: minmax(170px, 1fr) auto;
+  align-items: center;
+  min-height: 78px;
+  padding: 16px 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--brown) 18%, var(--line));
+  background:
+    linear-gradient(90deg, rgba(154,93,45,.12), rgba(154,93,45,.035) 48%, rgba(255,255,255,.52)),
+    var(--planner-card-2);
+}
+
+body[data-page="planner"] .semester-head strong {
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+body[data-page="planner"] .semester-head > div:first-child span {
+  color: color-mix(in srgb, var(--brown) 72%, var(--muted));
+  font-size: 12px;
+}
+
+body[data-page="planner"] .semester-meta {
+  gap: 12px;
+}
+
+body[data-page="planner"] .dean-button {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--brown) 38%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.58), rgba(255,255,255,.16)),
+    color-mix(in srgb, var(--brown) 7%, var(--paper));
+  color: color-mix(in srgb, var(--brown) 82%, var(--ink));
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+body[data-page="planner"] .session-select {
+  min-height: 46px;
+  width: 150px;
+  font-weight: 800;
+}
+
+body[data-page="planner"] .term-gpa {
+  min-width: 84px;
+}
+
+body[data-page="planner"] .term-gpa span {
+  color: color-mix(in srgb, var(--brown) 64%, var(--muted));
+}
+
+body[data-page="planner"] .term-gpa strong {
+  font-size: 31px;
+  line-height: .98;
+}
+
+body[data-page="planner"] .semester-body {
+  padding: 0 18px 18px;
+}
+
+body[data-page="planner"] .course {
+  grid-template-columns: 96px minmax(260px, 1fr) 52px minmax(316px, auto);
+  gap: 16px;
+  min-height: 76px;
+  margin: 0;
+  padding: 13px 8px 13px 14px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--brown) 14%, var(--line));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--cat) 8%, var(--paper)), rgba(255,255,255,.45) 42%),
+    var(--paper);
+}
+
+body[data-page="planner"] .course:last-of-type {
+  border-bottom: 0;
+}
+
+body[data-page="planner"] .course::before {
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--cat);
+}
+
+body[data-page="planner"] .course-code {
+  color: color-mix(in srgb, var(--brown) 54%, var(--muted));
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+
+body[data-page="planner"] .course-title {
+  gap: 8px;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+body[data-page="planner"] .course-sub {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+body[data-page="planner"] .course-credit {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+body[data-page="planner"] .inline-actions {
+  gap: 10px;
+}
+
+body[data-page="planner"] .course-action {
+  gap: 4px;
+}
+
+body[data-page="planner"] .course-action span {
+  color: color-mix(in srgb, var(--brown) 62%, var(--muted));
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .13em;
+}
+
+body[data-page="planner"] .grade-select,
+body[data-page="planner"] .compact-select,
+body[data-page="planner"] .mini-button {
+  min-height: 44px;
+  border-radius: 4px;
+}
+
+body[data-page="planner"] .grade-select {
+  width: 96px;
+}
+
+body[data-page="planner"] .compact-select {
+  width: 164px;
+}
+
+body[data-page="planner"] .remove-button {
+  min-width: 158px;
+  padding-inline: 16px;
+  border-color: color-mix(in srgb, var(--brown) 22%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.66), rgba(249,244,238,.72));
+  color: color-mix(in srgb, var(--brown) 64%, var(--ink));
+}
+
+body[data-page="planner"] .course.locked {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--red) 15%, var(--paper)), color-mix(in srgb, var(--red) 4%, var(--paper)) 46%),
+    var(--paper);
+}
+
+body[data-page="planner"] .dropdown-add {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in srgb, var(--brown) 22%, var(--line));
+}
+
+body[data-page="planner"] .empty-state {
+  margin: 14px 0 0;
+  padding: 18px 20px;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.7), rgba(249,244,238,.86));
+}
+
+body[data-page="planner"] .semester-add-panel {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px dashed color-mix(in srgb, var(--brown) 24%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bone) 82%, var(--paper));
+}
+
+body.dark-mode[data-page="planner"] {
+  --planner-card: #1a130e;
+  --planner-card-2: #21170f;
+  --planner-stroke: #4a3728;
+  --planner-stroke-strong: #90643e;
+  --planner-wash: #18110c;
+  --planner-shadow: 0 18px 46px rgba(0, 0, 0, .22);
+}
+
+body.dark-mode[data-page="planner"] .topbar.planner-setup,
+body.dark-mode[data-page="planner"] .category-legend,
+body.dark-mode[data-page="planner"] .semester {
+  background:
+    radial-gradient(circle at 0 0, rgba(197,139,79,.12), transparent 34%),
+    linear-gradient(135deg, rgba(255,243,220,.035), rgba(255,243,220,.01)),
+    var(--planner-card);
+  border-color: var(--planner-stroke);
+}
+
+body.dark-mode[data-page="planner"] .planner-title-card,
+body.dark-mode[data-page="planner"] .semester-head {
+  background:
+    linear-gradient(135deg, rgba(197,139,79,.14), rgba(197,139,79,.035)),
+    var(--planner-card-2);
+  border-color: var(--planner-stroke);
+}
+
+body.dark-mode[data-page="planner"] .program-controls .select,
+body.dark-mode[data-page="planner"] .program-controls .button.danger,
+body.dark-mode[data-page="planner"] .remove-button,
+body.dark-mode[data-page="planner"] .grade-select,
+body.dark-mode[data-page="planner"] .compact-select,
+body.dark-mode[data-page="planner"] .session-select {
+  background:
+    linear-gradient(180deg, rgba(255,243,220,.045), rgba(255,243,220,.01)),
+    #17110c;
+  border-color: var(--planner-stroke);
+  color: var(--ink);
+}
+
+body.dark-mode[data-page="planner"] .program-controls .button.solid {
+  background: linear-gradient(180deg, #c99258, #9e6738);
+  border-color: #d09a60;
+  color: #17110c;
+}
+
+body.dark-mode[data-page="planner"] .legend-chip {
+  background:
+    linear-gradient(180deg, rgba(255,243,220,.045), rgba(255,243,220,0)),
+    color-mix(in srgb, var(--cat) 13%, #17110c);
+}
+
+body.dark-mode[data-page="planner"] .course {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--cat) 13%, #18110c), rgba(24,17,12,.74) 45%),
+    #18110c;
+  border-bottom-color: #33261b;
+}
+
+body.dark-mode[data-page="planner"] .course.locked {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--red) 20%, #18110c), color-mix(in srgb, var(--red) 7%, #18110c) 48%),
+    #18110c;
+}
+
+body.dark-mode[data-page="planner"] .empty-state,
+body.dark-mode[data-page="planner"] .semester-add-panel {
+  background:
+    linear-gradient(135deg, rgba(197,139,79,.06), transparent 58%),
+    #18110c;
+  border-color: var(--planner-stroke);
+}
+
+@media (max-width: 1180px) {
+  body[data-page="planner"] .topbar.planner-setup {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="planner"] .planner-title-card {
+    min-height: auto;
+  }
+
+  body[data-page="planner"] .course {
+    grid-template-columns: 84px minmax(220px, 1fr) 50px minmax(280px, auto);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 920px) {
+  body[data-page="planner"] .topbar.planner-setup {
+    padding: 16px;
+  }
+
+  body[data-page="planner"] .program-controls {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="planner"] .course {
+    grid-template-columns: 1fr;
+    padding: 15px 14px;
+  }
+
+  body[data-page="planner"] .inline-actions {
+    grid-template-columns: minmax(90px, .7fr) minmax(150px, 1fr) minmax(150px, auto);
+  }
+}
+
+@media (max-width: 560px) {
+  body[data-page="planner"] #plannerTitle {
+    font-size: 28px;
+  }
+
+  body[data-page="planner"] .category-legend,
+  body[data-page="planner"] .semester-body {
+    padding-inline: 14px;
+  }
+
+  body[data-page="planner"] .semester-head {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  body[data-page="planner"] .semester-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="planner"] .inline-actions {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="planner"] .grade-select,
+  body[data-page="planner"] .compact-select,
+  body[data-page="planner"] .remove-button {
+    width: 100%;
+  }
+}
+
+/* Planner visual reset v3: academic workspace polish for site 2 only. */
+body[data-page="planner"] {
+  --planner-card: #fffdf9;
+  --planner-card-2: #f7efe6;
+  --planner-stroke: #dfd5ca;
+  --planner-stroke-strong: #a57955;
+  --planner-wash: #f6f0e9;
+  --planner-quiet: #efe5da;
+  --planner-shadow: 0 10px 30px rgba(58, 42, 28, .075);
+  --planner-shadow-soft: 0 1px 2px rgba(58, 42, 28, .08);
+  background:
+    linear-gradient(180deg, #fbf7f1 0, #f5eee6 460px, var(--surface) 100%);
+}
+
+body[data-page="planner"] .main {
+  padding-top: 34px;
+}
+
+body[data-page="planner"] .container {
+  max-width: 1420px;
+}
+
+body[data-page="planner"] .topbar.planner-setup {
+  grid-template-columns: minmax(260px, 420px) minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 18px;
+  border-color: var(--planner-stroke);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--planner-card) 88%, var(--planner-wash));
+  box-shadow: var(--planner-shadow);
+}
+
+body[data-page="planner"] .planner-title-card {
+  min-height: 132px;
+  padding: 18px 20px;
+  border-color: transparent;
+  border-left: 4px solid var(--planner-stroke-strong);
+  border-radius: 6px;
+  background: transparent;
+}
+
+body[data-page="planner"] .planner-title-card .eyebrow {
+  margin-bottom: 8px;
+  color: #6f5745;
+  letter-spacing: .14em;
+}
+
+body[data-page="planner"] #plannerTitle {
+  max-width: 390px;
+  font-size: clamp(26px, 2.05vw, 34px);
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+
+body[data-page="planner"] .program-controls {
+  grid-template-columns: minmax(250px, 1.25fr) repeat(2, minmax(160px, .75fr));
+  gap: 10px;
+  align-content: center;
+}
+
+body[data-page="planner"] .program-controls > select:first-child {
+  grid-column: auto;
+}
+
+body[data-page="planner"] .program-controls .button,
+body[data-page="planner"] .program-controls .select {
+  min-height: 46px;
+  border-radius: 6px;
+  box-shadow: var(--planner-shadow-soft);
+}
+
+body[data-page="planner"] .program-controls .select,
+body[data-page="planner"] .session-select,
+body[data-page="planner"] .grade-select,
+body[data-page="planner"] .compact-select,
+body[data-page="planner"] .add-select {
+  border-color: var(--planner-stroke);
+  background: var(--planner-card);
+}
+
+body[data-page="planner"] .program-controls .button.solid,
+body[data-page="planner"] .dropdown-add .button.solid {
+  border-color: #24342f;
+  background: #24342f;
+  color: #fff7ea;
+}
+
+body[data-page="planner"] .program-controls .button.danger,
+body[data-page="planner"] .remove-button {
+  border-color: #d8c7bb;
+  background: #fffaf4;
+  color: #7f312f;
+}
+
+body[data-page="planner"] .program-controls .button:hover,
+body[data-page="planner"] .dropdown-add .button.solid:hover {
+  border-color: #1b2925;
+  background: #1b2925;
+  color: #fff7ea;
+}
+
+body[data-page="planner"] .category-legend {
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-color: var(--planner-stroke);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--planner-card) 84%, var(--planner-wash));
+  box-shadow: var(--planner-shadow-soft);
+}
+
+body[data-page="planner"] .legend-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+body[data-page="planner"] .legend-chip {
+  min-height: 36px;
+  padding: 8px 12px;
+  border-color: color-mix(in srgb, var(--cat) 34%, var(--planner-stroke));
+  background: color-mix(in srgb, var(--cat) 7%, var(--planner-card));
+}
+
+body[data-page="planner"] .legend-chip strong {
+  font-size: 10px;
+  color: color-mix(in srgb, var(--cat) 70%, #2b2722);
+}
+
+body[data-page="planner"] .legend-chip span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+body[data-page="planner"] .commitment-note {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--planner-stroke);
+  color: #66594e;
+}
+
+body[data-page="planner"] #semesters.grid.cols-2 {
+  gap: 16px;
+}
+
+body[data-page="planner"] .semester {
+  border-color: var(--planner-stroke);
+  border-radius: 8px;
+  background: var(--planner-card);
+  box-shadow: var(--planner-shadow);
+}
+
+body[data-page="planner"] .semester-head {
+  min-height: 66px;
+  padding: 13px 16px;
+  border-bottom-color: var(--planner-stroke);
+  background: var(--planner-card-2);
+}
+
+body[data-page="planner"] .semester-head strong {
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+body[data-page="planner"] .semester-head > div:first-child span,
+body[data-page="planner"] .term-gpa span {
+  color: #755e4b;
+}
+
+body[data-page="planner"] .semester-meta {
+  gap: 10px;
+}
+
+body[data-page="planner"] .dean-button {
+  min-height: 38px;
+  border-color: #cfbca9;
+  background: #fffaf4;
+  color: #614634;
+}
+
+body[data-page="planner"] .dean-button:hover {
+  border-color: #a57955;
+  background: #f4e8dc;
+  color: #2b2722;
+}
+
+body[data-page="planner"] .session-select {
+  width: 128px;
+  min-height: 40px;
+}
+
+body[data-page="planner"] .term-gpa {
+  min-width: 74px;
+  padding-left: 10px;
+  border-left: 1px solid var(--planner-stroke);
+}
+
+body[data-page="planner"] .term-gpa strong {
+  font-size: 26px;
+}
+
+body[data-page="planner"] .semester-body {
+  padding: 0 14px 14px;
+}
+
+body[data-page="planner"] .course {
+  grid-template-columns: 88px minmax(230px, 1fr) 48px minmax(286px, auto);
+  gap: 12px;
+  min-height: 68px;
+  padding: 11px 6px 11px 12px;
+  border-bottom-color: #eadfd4;
+  background: var(--planner-card);
+}
+
+body[data-page="planner"] .course:hover {
+  background: color-mix(in srgb, var(--cat) 5%, #fffdf9);
+}
+
+body[data-page="planner"] .course::before {
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+}
+
+body[data-page="planner"] .course-code {
+  color: #6d5846;
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+body[data-page="planner"] .course-title {
+  font-size: 15px;
+  line-height: 1.28;
+}
+
+body[data-page="planner"] .course-sub,
+body[data-page="planner"] .course-lock {
+  font-size: 12px;
+}
+
+body[data-page="planner"] .course-credit {
+  color: #4f675c;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+body[data-page="planner"] .inline-actions {
+  gap: 8px;
+}
+
+body[data-page="planner"] .grade-select,
+body[data-page="planner"] .compact-select,
+body[data-page="planner"] .mini-button {
+  min-height: 40px;
+  border-radius: 6px;
+}
+
+body[data-page="planner"] .grade-select {
+  width: 86px;
+}
+
+body[data-page="planner"] .compact-select {
+  width: 144px;
+}
+
+body[data-page="planner"] .remove-button {
+  min-width: 136px;
+}
+
+body[data-page="planner"] .dropdown-add {
+  grid-template-columns: minmax(0, 1fr) minmax(96px, auto);
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top-color: #e5d8cb;
+}
+
+body[data-page="planner"] .empty-state {
+  margin-top: 12px;
+  border: 1px dashed var(--planner-stroke);
+  background: #fffaf4;
+}
+
+body[data-page="planner"] .semester-add-panel {
+  margin-top: 22px;
+  padding: 20px;
+  border-color: #d7c6b5;
+  border-radius: 8px;
+  background: #f8f1e9;
+}
+
+body[data-page="planner"] .semester-add-panel .button {
+  min-height: 46px;
+  border-radius: 6px;
+  background: var(--planner-card);
+}
+
+body.dark-mode[data-page="planner"] {
+  --planner-card: #191510;
+  --planner-card-2: #211a13;
+  --planner-stroke: #443529;
+  --planner-stroke-strong: #b9875c;
+  --planner-wash: #16110d;
+  --planner-quiet: #251d16;
+  --planner-shadow: 0 12px 32px rgba(0, 0, 0, .28);
+  --planner-shadow-soft: 0 1px 2px rgba(0, 0, 0, .26);
+  background:
+    linear-gradient(180deg, #15110d 0, #18130f 460px, var(--surface) 100%);
+}
+
+body.dark-mode[data-page="planner"] .topbar.planner-setup,
+body.dark-mode[data-page="planner"] .category-legend,
+body.dark-mode[data-page="planner"] .semester {
+  background: var(--planner-card);
+  border-color: var(--planner-stroke);
+}
+
+body.dark-mode[data-page="planner"] .planner-title-card,
+body.dark-mode[data-page="planner"] .semester-head {
+  background: var(--planner-card-2);
+  border-color: var(--planner-stroke);
+}
+
+body.dark-mode[data-page="planner"] .planner-title-card .eyebrow,
+body.dark-mode[data-page="planner"] .semester-head > div:first-child span,
+body.dark-mode[data-page="planner"] .term-gpa span,
+body.dark-mode[data-page="planner"] .commitment-note {
+  color: #c6b09b;
+}
+
+body.dark-mode[data-page="planner"] .program-controls .select,
+body.dark-mode[data-page="planner"] .session-select,
+body.dark-mode[data-page="planner"] .grade-select,
+body.dark-mode[data-page="planner"] .compact-select,
+body.dark-mode[data-page="planner"] .add-select {
+  background: #15110d;
+  border-color: var(--planner-stroke);
+  color: var(--ink);
+}
+
+body.dark-mode[data-page="planner"] .program-controls .button.solid,
+body.dark-mode[data-page="planner"] .dropdown-add .button.solid {
+  border-color: #d6a06b;
+  background: #d6a06b;
+  color: #15110d;
+}
+
+body.dark-mode[data-page="planner"] .program-controls .button.danger,
+body.dark-mode[data-page="planner"] .remove-button,
+body.dark-mode[data-page="planner"] .dean-button {
+  background: #1f1812;
+  border-color: #594235;
+  color: #eeaaa5;
+}
+
+body.dark-mode[data-page="planner"] .dean-button {
+  color: #e1c5a8;
+}
+
+body.dark-mode[data-page="planner"] .legend-chip {
+  background: color-mix(in srgb, var(--cat) 12%, #15110d);
+}
+
+body.dark-mode[data-page="planner"] .legend-chip strong {
+  color: color-mix(in srgb, var(--cat) 56%, #f6efe5);
+}
+
+body.dark-mode[data-page="planner"] .course {
+  background: #17120e;
+  border-bottom-color: #33271f;
+}
+
+body.dark-mode[data-page="planner"] .course:hover {
+  background: color-mix(in srgb, var(--cat) 10%, #17120e);
+}
+
+body.dark-mode[data-page="planner"] .course-code,
+body.dark-mode[data-page="planner"] .course-credit {
+  color: #d1b591;
+}
+
+body.dark-mode[data-page="planner"] .empty-state,
+body.dark-mode[data-page="planner"] .semester-add-panel {
+  background: #18130f;
+  border-color: var(--planner-stroke);
+}
+
+@media (max-width: 1180px) {
+  body[data-page="planner"] .program-controls {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  body[data-page="planner"] .program-controls > select:first-child {
+    grid-column: 1 / -1;
+  }
+
+  body[data-page="planner"] .course {
+    grid-template-columns: 82px minmax(220px, 1fr) 46px minmax(258px, auto);
+  }
+}
+
+@media (max-width: 1320px) and (min-width: 921px) {
+  .main {
+    padding-inline: 36px;
+  }
+
+  body[data-page="planner"] .topbar.planner-setup {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="planner"] .planner-title-card {
+    min-height: auto;
+  }
+
+  body[data-page="planner"] .program-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body[data-page="planner"] .program-controls > select:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 920px) {
+  .site-shell,
+  .side,
+  .main,
+  .container {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .side {
+    overflow: hidden;
+  }
+
+  .nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 100%;
+    min-width: 0;
+    gap: 8px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .nav a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+  }
+
+  .nav a.active {
+    box-shadow: inset 0 3px 0 var(--amber);
+  }
+
+  body[data-page="planner"] .main {
+    padding-top: 24px;
+  }
+
+  body[data-page="planner"] .topbar.planner-setup {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  body[data-page="planner"] .planner-title-card {
+    min-height: auto;
+    padding: 14px 16px;
+  }
+
+  body[data-page="planner"] .program-controls,
+  body[data-page="planner"] .dropdown-add {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="planner"] .course {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 13px 12px;
+  }
+
+  body[data-page="planner"] .inline-actions {
+    grid-template-columns: minmax(82px, .65fr) minmax(142px, 1fr) minmax(132px, auto);
+  }
+}
+
+@media (max-width: 560px) {
+  .nav {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nav a {
+    font-size: 14px;
+  }
+
+  body[data-page="planner"] #plannerTitle {
+    font-size: 25px;
+  }
+
+  body[data-page="planner"] .legend-chip {
+    width: 100%;
+  }
+
+  body[data-page="planner"] .semester-meta {
+    gap: 8px;
+  }
+
+  body[data-page="planner"] .term-gpa {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  body[data-page="planner"] .inline-actions {
+    grid-template-columns: 1fr;
   }
 }
