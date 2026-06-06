@@ -357,14 +357,25 @@
     (c.pre || []).forEach((pre) => {
       const preCourse = getCourse(pre);
       if (preCourse && preCourse.cat === "B" && preCourse.pathway && !pathwayAllowed.has(pre)) return;
-      let found = null;
+      const attempts = [];
       for (let s = 1; s < sem; s++) {
-        found = (state.plan[s] || []).find((item) => item.code === pre);
-        if (found) break;
+        (state.plan[s] || []).forEach((item) => {
+          if (item.code === pre) attempts.push({ ...item, sem: s });
+        });
       }
-      if (!found) missing.push(pre);
-      if (found && found.grade && FAIL_GRADES.has(found.grade)) missing.push(`${pre} failed`);
-      if (found && requireGrades && !found.grade) missing.push(`${pre} grade missing`);
+      if (!attempts.length) {
+        missing.push(pre);
+        return;
+      }
+      if (requireGrades) {
+        const passedAttempt = attempts.find((item) => item.grade && !FAIL_GRADES.has(item.grade));
+        if (passedAttempt) return;
+        const latestAttempt = attempts[attempts.length - 1];
+        missing.push(latestAttempt.grade ? `${pre} failed` : `${pre} grade missing`);
+        return;
+      }
+      const latestAttempt = attempts[attempts.length - 1];
+      if (latestAttempt.grade && FAIL_GRADES.has(latestAttempt.grade)) missing.push(`${pre} failed`);
     });
     const priorCredits = creditsBefore(sem, { passedOnly: requireGrades });
     if (c.minCr && priorCredits < c.minCr) missing.push(`${c.minCr}cr minimum`);
