@@ -1376,30 +1376,24 @@
     const p = currentProgram();
     for (let sem = 1; sem <= totalSems(); sem++) {
       const credits = (state.plan[sem] || []).reduce((sum, item) => sum + courseCredits(item), 0);
-      if (credits > 0 && credits < MIN_CR && !(p.shortSems || []).includes(sem)) {
-        issues.push({ kind: "load", title: `Semester ${sem}: ${credits} cr`, detail: `under minimum (${MIN_CR})` });
-      }
       if (credits > MAX_CR) {
         issues.push({ kind: "load", title: `Semester ${sem}: ${credits} cr`, detail: `over maximum (${MAX_CR})` });
       }
       (state.plan[sem] || []).forEach((item) => {
         const status = prereqStatus(item.code, sem, { requireGrades: true });
-        const realRuleIssues = status.missing.filter((issue) => !issue.includes("grade missing"));
+        const realRuleIssues = status.missing.filter((issue) => issue.includes("failed"));
         if (realRuleIssues.length) {
           issues.push({ kind: "rule", title: `${item.code} (Sem ${sem})`, detail: `locked: ${realRuleIssues.join(", ")}` });
         }
         if (item.grade && FAIL_GRADES.has(item.grade)) {
-          issues.push({ kind: "retake", title: `${item.code} (Sem ${sem}): ${item.grade}`, detail: "retake required (UUM rule c)" });
+          const passedLater = Array.from({ length: totalSems() - sem }, (_, offset) => sem + offset + 1)
+            .some((laterSem) => (state.plan[laterSem] || []).some((laterItem) => (
+              laterItem.code === item.code && laterItem.grade && !FAIL_GRADES.has(laterItem.grade)
+            )));
+          if (!passedLater) {
+            issues.push({ kind: "retake", title: `${item.code} (Sem ${sem}): ${item.grade}`, detail: "retake required (UUM rule c)" });
+          }
         }
-      });
-    }
-    const selectedTrack = committedTrackId() || state.trackId;
-    const decisionMathSelected = (p.id === "BBANK" && selectedTrack === "MP") || (p.id === "BRMI" && selectedTrack === "DM");
-    if (decisionMathSelected && plannedCredits() > effectiveTotalCredits(p)) {
-      issues.push({
-        kind: "load",
-        title: "Decision Mathematics adds one extra credit",
-        detail: "Calculus I is 4 credits, so this route can finish at 121 credits instead of 120. This is a note, not a blocker."
       });
     }
     const count = $("alertCount");
