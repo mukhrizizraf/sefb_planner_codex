@@ -509,6 +509,13 @@ h3 { font-size: 23px; line-height: 1.15; }
   line-height: 1;
 }
 
+.stat-note,
+.credit-note {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .muted { color: var(--muted); }
 
 .cgpa-overview {

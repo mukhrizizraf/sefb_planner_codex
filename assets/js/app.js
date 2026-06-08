@@ -243,6 +243,14 @@
     return out;
   }
 
+  function countsTowardPlannedCredit(item) {
+    return !item.grade || !FAIL_GRADES.has(item.grade);
+  }
+
+  function cappedRequirementCredits(progress) {
+    return Object.values(progress).reduce((sum, comp) => sum + Math.min(comp.done, comp.req), 0);
+  }
+
   function plannedCredits() {
     return plannedItems().reduce((sum, item) => sum + courseCredits(item), 0);
   }
@@ -400,6 +408,43 @@
       if (c && byCat[c.cat] && isCourseAllowedForPathway(c)) byCat[c.cat].done += c.cr;
     });
     return byCat;
+  }
+
+  function graduationComponentProgress(options = {}) {
+    const p = currentProgram();
+    const byCat = {};
+    effectiveComponents(p).forEach((comp) => {
+      byCat[comp.l] = { ...comp, done: 0 };
+    });
+    const items = options.completedOnly
+      ? plannedItems().filter(hasCompletedCourse)
+      : plannedItems().filter(countsTowardPlannedCredit);
+    const counted = new Set();
+    items.forEach((item) => {
+      if (counted.has(item.code)) return;
+      const c = getCourse(item.code);
+      if (c && byCat[c.cat] && isCourseAllowedForPathway(c)) {
+        byCat[c.cat].done += c.cr;
+        counted.add(item.code);
+      }
+    });
+    return byCat;
+  }
+
+  function graduationPlannedCredits() {
+    return cappedRequirementCredits(graduationComponentProgress());
+  }
+
+  function graduationCompletedCredits() {
+    return cappedRequirementCredits(graduationComponentProgress({ completedOnly: true }));
+  }
+
+  function hasLaterPassedAttempt(code, sem) {
+    return plannedItems().some((item) => item.code === code && item.sem > sem && hasPassingGrade(item));
+  }
+
+  function unresolvedFailedRetakes() {
+    return plannedItems().filter((item) => item.grade && FAIL_GRADES.has(item.grade) && !hasLaterPassedAttempt(item.code, item.sem));
   }
 
   function availableCourses(sem) {
@@ -648,23 +693,26 @@
   function renderOverview() {
     const p = currentProgram();
     const g = computeGPA();
-    const total = plannedCredits();
+    const plannedTotal = graduationPlannedCredits();
+    const passedTotal = graduationCompletedCredits();
     const hasCgpa = g.gradedCredits > 0;
     const standing = hasCgpa ? classifyCgpa(g.cgpa) : null;
     const heroProgram = $("heroProgram");
     if (heroProgram) heroProgram.textContent = programDisplayName(p);
     const requiredTotal = effectiveTotalCredits(p);
     $("heroMeta").textContent = `${requiredTotal} credits / ${p.semCount} semesters / ${p.courses.length} course entries`;
-    $("statCredits").textContent = `${total}/${requiredTotal}`;
+    $("statCredits").textContent = `${passedTotal}/${requiredTotal}`;
+    const statCreditsNote = $("statCreditsNote");
+    if (statCreditsNote) statCreditsNote.textContent = "Only passing grades count. Blank and failed attempts are excluded.";
     $("statCgpa").textContent = hasCgpa ? g.cgpa.toFixed(2) : "--";
     $("statCourses").textContent = plannedItems().length;
     $("statStatus").textContent = standing ? standing.label : "Awaiting grades";
-    renderCgpaOverview(g, total, standing);
-    renderComponents("componentGrid");
+    renderCgpaOverview(g, { plannedTotal, passedTotal, requiredTotal }, standing);
+    renderComponents("componentGrid", { graduationOnly: true });
     renderSemesterBars("semesterBars");
   }
 
-  function renderCgpaOverview(g, total, standing) {
+  function renderCgpaOverview(g, credits, standing) {
     const gauge = $("cgpaGauge");
     if (!gauge) return;
     const hasCgpa = g.gradedCredits > 0;
@@ -680,27 +728,33 @@
     $("cgpaGaugeValue").textContent = hasCgpa ? g.cgpa.toFixed(2) : "--";
     $("cgpaGaugeStanding").textContent = standing ? standing.label : "Awaiting grades";
     $("cgpaGaugeNote").textContent = hasCgpa
-      ? `${g.gradedCourses}/${g.plannedCourses} planned courses graded. Final standing may change.`
+      ? `${g.gradedCourses}/${g.plannedCourses} planned courses graded. ${credits.passedTotal}/${credits.requiredTotal} credits passed.`
       : `${g.gradedCourses}/${g.plannedCourses} planned courses graded.`;
     $("cgpaStandingTitle").textContent = standing ? standing.label : "Awaiting grades";
     $("cgpaStandingText").textContent = hasCgpa
-      ? "Based on grades entered so far. Graduation eligibility still requires every planned course to be graded."
+      ? "CGPA is based on grades entered so far. Credit progress counts only courses with passing results; blank or failed attempts do not earn credits."
       : "Enter at least one grade to calculate CGPA.";
     $("overviewProgramName").textContent = programDisplayName(currentProgram());
-    $("overviewCreditsPlanned").textContent = total;
+    $("overviewCreditsPlanned").textContent = `${credits.plannedTotal}/${credits.requiredTotal}`;
     $("overviewGradedCourses").textContent = g.gradedCourses;
     $("overviewGradedCredits").textContent = g.gradedCredits;
+    const creditNote = $("overviewCreditNote");
+    if (creditNote) creditNote.textContent = `Graduation progress: ${credits.passedTotal}/${credits.requiredTotal} passed credits. CGPA credits include every graded attempt, including failed papers.`;
   }
 
-  function renderComponents(id) {
+  function renderComponents(id, options = {}) {
     const holder = $(id);
     if (!holder) return;
-    holder.innerHTML = Object.values(componentProgress()).map((comp) => {
+    const progress = options.graduationOnly
+      ? graduationComponentProgress({ completedOnly: true })
+      : componentProgress({ completedOnly: Boolean(options.completedOnly) });
+    const creditLabel = options.graduationOnly || options.completedOnly ? "credits passed" : "credits planned";
+    holder.innerHTML = Object.values(progress).map((comp) => {
       const pct = comp.req ? Math.min(100, Math.round((comp.done / comp.req) * 100)) : 100;
       return `<div class="panel">
         <div class="eyebrow">${comp.l}. ${comp.ms}</div>
         <h3>${comp.en}</h3>
-        <div class="muted">${comp.done}/${comp.req} credits</div>
+        <div class="muted">${comp.done}/${comp.req} ${creditLabel}</div>
         <div class="progress"><span style="--w:${pct}%"></span></div>
       </div>`;
     }).join("");
@@ -1244,18 +1298,18 @@
     const p = currentProgram();
     const planned = plannedItems();
     const gradedCount = planned.filter((item) => item.grade).length;
-    const failedCount = planned.filter((item) => item.grade && FAIL_GRADES.has(item.grade)).length;
-    const passedByCat = componentProgress({ completedOnly: true });
-    const plannedByCat = componentProgress();
-    const total = completedCredits();
-    const placedTotal = plannedCredits();
+    const unresolvedFailedCount = unresolvedFailedRetakes().length;
+    const passedByCat = graduationComponentProgress({ completedOnly: true });
+    const plannedByCat = graduationComponentProgress();
+    const total = graduationCompletedCredits();
+    const placedTotal = graduationPlannedCredits();
     const g = computeGPA();
     const items = [
       { ok: planned.length > 0 && gradedCount === planned.length, label: "All planned courses graded", value: `${gradedCount}/${planned.length} courses` },
       {
-        ok: planned.length > 0 && gradedCount === planned.length && failedCount === 0,
+        ok: planned.length > 0 && gradedCount === planned.length && unresolvedFailedCount === 0,
         label: "No failed courses pending retake",
-        value: gradedCount !== planned.length ? `${gradedCount}/${planned.length} courses graded` : failedCount ? `${failedCount} course(s)` : "OK"
+        value: gradedCount !== planned.length ? `${gradedCount}/${planned.length} courses graded` : unresolvedFailedCount ? `${unresolvedFailedCount} course(s)` : "OK"
       }
     ];
     Object.values(passedByCat).forEach((comp) => items.push({ ok: comp.done >= comp.req, label: `${comp.l}. ${comp.en}`, value: `${comp.done}/${comp.req} cr` }));
@@ -1263,7 +1317,7 @@
     items.push({ ok: total >= requiredTotal, label: "Completed credits", value: `${total}/${requiredTotal}` });
     items.push({ ok: g.allPlannedGraded && g.cgpa >= 2, label: "Minimum CGPA 2.00", value: g.allPlannedGraded ? g.cgpa.toFixed(2) : `${g.gradedCourses}/${g.plannedCourses} courses graded` });
     const remaining = items.filter((item) => !item.ok).length;
-    const pendingPlaced = planned.filter((item) => !hasCompletedCourse(item)).reduce((sum, item) => sum + courseCredits(item), 0);
+    const pendingPlaced = Math.max(0, placedTotal - total);
     const passedProgress = requiredTotal ? Math.min(100, Math.round((total / requiredTotal) * 100)) : 0;
     const eligible = items.every((item) => item.ok);
     const degree = $("auditDegree");

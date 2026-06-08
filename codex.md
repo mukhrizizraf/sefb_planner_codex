@@ -26,8 +26,9 @@ The original `sefb_site` folder is kept as the safer fallback version. Changes i
 - Removed noisy `Take Note` items for grade missing, minimum-credit locks, under-filled semesters, and "finish other courses first".
 - Fixed retake prerequisite logic so a later passed retake unlocks dependent courses.
 - Fixed old failed attempts so they no longer stay in `Take Note` after the course is retaken and passed later.
-- Current JavaScript cache version: `app.js?v=20260607a`.
-- Current stylesheet cache version: `styles.css?v=20260606o`.
+- Graduation credit progress now uses passed-credit-only helpers: failed attempts and duplicate retakes do not inflate the credit hours required for graduation, while GPA/CGPA still includes graded failed attempts.
+- Current JavaScript cache version: `app.js?v=20260608a`.
+- Current stylesheet cache version: `styles.css?v=20260608a`.
 
 ## Verification
 
