@@ -704,9 +704,11 @@
     $("statCredits").textContent = `${passedTotal}/${requiredTotal}`;
     const statCreditsNote = $("statCreditsNote");
     if (statCreditsNote) statCreditsNote.textContent = "Only passing grades count. Blank and failed attempts are excluded.";
-    $("statCgpa").textContent = hasCgpa ? g.cgpa.toFixed(2) : "--";
+    const statCgpa = $("statCgpa");
+    if (statCgpa) statCgpa.textContent = hasCgpa ? g.cgpa.toFixed(2) : "--";
     $("statCourses").textContent = plannedItems().length;
-    $("statStatus").textContent = standing ? standing.label : "Awaiting grades";
+    const statStatus = $("statStatus");
+    if (statStatus) statStatus.textContent = standing ? standing.label : "Awaiting grades";
     renderCgpaOverview(g, { plannedTotal, passedTotal, requiredTotal }, standing);
     renderComponents("componentGrid", { graduationOnly: true });
     renderSemesterBars("semesterBars");
@@ -716,7 +718,8 @@
     const gauge = $("cgpaGauge");
     if (!gauge) return;
     const hasCgpa = g.gradedCredits > 0;
-    $("cgpaOverview").dataset.tone = standing ? standing.tone : "empty";
+    const overview = $("cgpaOverview");
+    if (overview) overview.dataset.tone = standing ? standing.tone : "empty";
     const value = hasCgpa ? g.cgpa : 0;
     const pct = Math.max(0, Math.min(100, (value / 4) * 100));
     const angle = `${(pct / 100) * 360}deg`;
@@ -730,14 +733,22 @@
     $("cgpaGaugeNote").textContent = hasCgpa
       ? `${g.gradedCourses}/${g.plannedCourses} planned courses graded. ${credits.passedTotal}/${credits.requiredTotal} credits passed.`
       : `${g.gradedCourses}/${g.plannedCourses} planned courses graded.`;
-    $("cgpaStandingTitle").textContent = standing ? standing.label : "Awaiting grades";
-    $("cgpaStandingText").textContent = hasCgpa
-      ? "CGPA is based on grades entered so far. Credit progress counts only courses with passing results; blank or failed attempts do not earn credits."
-      : "Enter at least one grade to calculate CGPA.";
-    $("overviewProgramName").textContent = programDisplayName(currentProgram());
-    $("overviewCreditsPlanned").textContent = `${credits.plannedTotal}/${credits.requiredTotal}`;
-    $("overviewGradedCourses").textContent = g.gradedCourses;
-    $("overviewGradedCredits").textContent = g.gradedCredits;
+    const cgpaStandingTitle = $("cgpaStandingTitle");
+    if (cgpaStandingTitle) cgpaStandingTitle.textContent = standing ? standing.label : "Awaiting grades";
+    const cgpaStandingText = $("cgpaStandingText");
+    if (cgpaStandingText) {
+      cgpaStandingText.textContent = hasCgpa
+        ? "CGPA is based on grades entered so far. Credit progress counts only courses with passing results; blank or failed attempts do not earn credits."
+        : "Enter at least one grade to calculate CGPA.";
+    }
+    const overviewProgramName = $("overviewProgramName");
+    if (overviewProgramName) overviewProgramName.textContent = programDisplayName(currentProgram());
+    const overviewCreditsPlanned = $("overviewCreditsPlanned");
+    if (overviewCreditsPlanned) overviewCreditsPlanned.textContent = `${credits.plannedTotal}/${credits.requiredTotal}`;
+    const overviewGradedCourses = $("overviewGradedCourses");
+    if (overviewGradedCourses) overviewGradedCourses.textContent = g.gradedCourses;
+    const overviewGradedCredits = $("overviewGradedCredits");
+    if (overviewGradedCredits) overviewGradedCredits.textContent = g.gradedCredits;
     const creditNote = $("overviewCreditNote");
     if (creditNote) creditNote.textContent = `Graduation progress: ${credits.passedTotal}/${credits.requiredTotal} passed credits. CGPA credits include every graded attempt, including failed papers.`;
   }
